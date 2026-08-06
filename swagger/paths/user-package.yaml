@@ -1,0 +1,26 @@
+/package:
+  get:
+    tags:
+      - Package
+    summary: List available packages
+    description: Retrieves all active packages. Public endpoint.
+    responses:
+      "200":
+        description: List of packages
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: "#/components/schemas/PackageOutput"
+      "500":
+        description: Internal server error
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApiResponse"
+            examples:
+              error:
+                value:
+                  status: error
+                  message: An error occurred while fetching package

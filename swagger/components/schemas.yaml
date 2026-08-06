@@ -1,0 +1,592 @@
+BookingOutput:
+  type: object
+  properties:
+    id:
+      type: string
+      example: 4394f1e7-2392-4fbd-9799-5c3d1665a659
+    date:
+      type: string
+      format: date-time
+      example: "2023-10-01T12:00:00.000Z"
+    duration:
+      type: integer
+      example: 30
+    totalPrice:
+      type: string
+      example: "25.00"
+    status:
+      type: string
+      enum:
+        - pending
+        - confirmed
+        - cancelled
+        - completed
+      example: pending
+    user:
+      type: object
+      properties:
+        id:
+          type: string
+          example: Ub11f11111ff1f1edda111
+        displayName:
+          type: string
+          example: Yung
+        pictureUrl:
+          type: string
+          format: uri
+          example: "https://profile.line-scdn.net/..."
+      required:
+        - id
+        - displayName
+        - pictureUrl
+    branch:
+      type: object
+      properties:
+        id:
+          type: string
+          example: 13369aad-ee3b-4c23-b210-384b08ee3513
+        name:
+          type: string
+          example: Main Branch
+      required:
+        - id
+        - name
+    package:
+      type: object
+      properties:
+        id:
+          type: string
+          example: 50e91e6c-1387-4402-818a-7879c0409675
+        title:
+          type: string
+          example: XYZ Massage
+      required:
+        - id
+        - title
+    voucher:
+      type:
+        - object
+        - "null"
+      nullable: true
+      properties:
+        id:
+          type: string
+          example: voucher-id-123
+        code:
+          type: string
+          example: DISCOUNT50
+      required:
+        - id
+        - code
+  required:
+    - id
+    - date
+    - duration
+    - totalPrice
+    - status
+    - user
+    - branch
+    - package
+
+BookingInput:
+  type: object
+  properties:
+    branchId:
+      type: string
+      example: d281eaaf-cb8c-497e-9621-a4a63a4a3fda
+    packageId:
+      type: string
+      example: d281eaaf-cb8c-497e-9621-a4a63a4a3fda
+    voucherId:
+      type: string
+      example: d281eaaf-cb8c-497e-9621-a4a63a4a3fda
+    date:
+      type: string
+      format: date-time
+      example: "2023-10-01T12:00:00Z"
+  required:
+    - branchId
+    - packageId
+    - date
+
+BookingWithUserInput:
+  type: object
+  properties:
+    branchId:
+      type: string
+      example: d281eaaf-cb8c-497e-9621-a4a63a4a3fda
+    packageId:
+      type: string
+      example: d281eaaf-cb8c-497e-9621-a4a63a4a3fda
+    voucherId:
+      type: string
+      example: d281eaaf-cb8c-497e-9621-a4a63a4a3fda
+    date:
+      type: string
+      format: date-time
+      example: "2023-10-01T12:00:00Z"
+    userId:
+      type: string
+      example: d281eaaf-cb8c-497e-9621-a4a63a4a3fda
+  required:
+    - branchId
+    - packageId
+    - date
+    - userId
+
+BookingUpdateInput:
+  type: object
+  properties:
+    branchId:
+      type: string
+      example: d281eaaf-cb8c-497e-9621-a4a63a4a3fda
+    packageId:
+      type: string
+      example: d281eaaf-cb8c-497e-9621-a4a63a4a3fda
+    voucherId:
+      type: string
+      nullable: true
+      example: d281eaaf-cb8c-497e-9621-a4a63a4a3fda
+    date:
+      type: string
+      format: date-time
+      example: "2023-10-01T12:00:00Z"
+    status:
+      type: string
+      enum:
+        - pending
+        - confirmed
+        - cancelled
+        - completed
+      example: cancelled
+  required:
+    - branchId
+    - packageId
+    - date
+    - status
+
+BookingAdminUpdateInput:
+  type: object
+  properties:
+    userId:
+      type: string
+      example: d281eaaf-cb8c-497e-9621-a4a63a4a3fda
+    branchId:
+      type: string
+      example: d281eaaf-cb8c-497e-9621-a4a63a4a3fda
+    packageId:
+      type: string
+      example: d281eaaf-cb8c-497e-9621-a4a63a4a3fda
+    voucherId:
+      type: string
+      nullable: true
+      example: d281eaaf-cb8c-497e-9621-a4a63a4a3fda
+    date:
+      type: string
+      format: date-time
+      example: "2023-10-01T12:00:00Z"
+    status:
+      type: string
+      enum:
+        - pending
+        - confirmed
+        - cancelled
+        - completed
+      example: confirmed
+  required:
+    - userId
+    - branchId
+    - packageId
+    - date
+    - status
+
+BranchInput:
+  type: object
+  properties:
+    name:
+      type: string
+      example: Main Branch
+    address:
+      type: string
+      example: "123 Main St, City, Country"
+    googleMapUrl:
+      type: string
+      format: uri
+      example: "https://maps.google.com/?q=123+Main+St,+City,+Country"
+    phone:
+      type: string
+      example: "+1234567890"
+  required:
+    - name
+    - address
+    - googleMapUrl
+    - phone
+
+BranchOutput:
+  type: object
+  properties:
+    id:
+      type: string
+      example: d281eaaf-cb8c-497e-9621-a4a63a4a3fda
+    name:
+      type: string
+      example: Main Branch
+    address:
+      type: string
+      example: "123 Main St, City, Country"
+    googleMapUrl:
+      type: string
+      format: uri
+      example: "https://maps.google.com/?q=123+Main+St,+City,+Country"
+    phone:
+      type: string
+      example: "+1234567890"
+    googleMapEmbedUrl:
+      type: string
+      format: uri
+      example: "https://www.google.com/maps/embed?..."
+    pictureUrl:
+      type: string
+      format: uri
+      example: "https://example.com/branch.jpg"
+    description:
+      type: string
+      example: Cozy branch with experienced staff
+  required:
+    - id
+    - name
+    - address
+    - googleMapUrl
+    - phone
+
+PackageInput:
+  type: object
+  properties:
+    title:
+      type: string
+      example: XYZ Massage
+    description:
+      type: string
+      example: A thai massage package that includes a full body massage and aromatherapy.
+    price:
+      type: number
+      format: float
+      example: 25.0
+    duration:
+      type: integer
+      example: 60
+    pictureUrl:
+      type: string
+      format: uri
+      example: "https://example.com/package.jpg"
+    note:
+      type: string
+      example: Optional note for the package
+  required:
+    - title
+    - description
+    - price
+    - duration
+    - pictureUrl
+
+PackageOutput:
+  type: object
+  properties:
+    id:
+      type: string
+      example: d281eaaf-cb8c-497e-9621-a4a63a4a3fda
+    title:
+      type: string
+      example: XYZ Massage
+    description:
+      type: string
+      example: A thai massage package that includes a full body massage and aromatherapy.
+    price:
+      type: number
+      format: float
+      example: 25.0
+    duration:
+      type: integer
+      example: 60
+    pictureUrl:
+      type: string
+      format: uri
+      example: "https://example.com/package.jpg"
+    note:
+      type: string
+      example: Optional note for the package
+    type:
+      type: string
+      example: thai
+    isActive:
+      type: boolean
+      example: true
+  required:
+    - id
+    - title
+    - description
+    - price
+    - duration
+    - pictureUrl
+
+UserInfoResponse:
+  type: object
+  properties:
+    status:
+      type: string
+      example: success
+    user:
+      type: object
+      properties:
+        id:
+          type: string
+          example: Ub11f11111ff1f1edda111
+        displayName:
+          type: string
+          example: Yung
+        pictureUrl:
+          type: string
+          format: uri
+          example: "https://profile.line-scdn.net/..."
+      required:
+        - id
+        - displayName
+        - pictureUrl
+  required:
+    - status
+    - user
+
+VoucherInput:
+  type: object
+  properties:
+    code:
+      type: string
+      example: WELCOME10
+    discount:
+      type: number
+      format: float
+      example: 10.0
+    isExpired:
+      type: boolean
+      example: false
+  required:
+    - code
+    - discount
+    - isExpired
+
+VoucherOutput:
+  type: object
+  properties:
+    id:
+      type: string
+      example: d281eaaf-cb8c-497e-9621-a4a63a4a3fda
+    code:
+      type: string
+      example: WELCOME10
+    discount:
+      type: number
+      format: float
+      example: 10.0
+    isExpired:
+      type: boolean
+      example: false
+  required:
+    - id
+    - code
+    - discount
+    - isExpired
+
+UserStaffInput:
+  type: object
+  properties:
+    username:
+      type: string
+      example: staffuser
+    email:
+      type: string
+      format: email
+      example: example@mail.com
+    password:
+      type: string
+      format: password
+      example: securepassword123
+  required:
+    - username
+    - email
+    - password
+
+UserStaffOutput:
+  type: object
+  properties:
+    id:
+      type: string
+      example: d281eaaf-cb8c-497e-9621-a4a63a4a3fda
+    username:
+      type: string
+      example: staffuser
+    email:
+      type: string
+      format: email
+      example: example@mail.com
+  required:
+    - id
+    - username
+    - email
+
+UserOutput:
+  type: object
+  properties:
+    id:
+      type: string
+      example: some user-id
+    displayName:
+      type: string
+      example: John Doe
+    pictureUrl:
+      type: string
+      format: uri
+      example: "https://example.com/profile.jpg"
+    createdAt:
+      type: string
+      format: date-time
+      example: "2023-10-01T12:00:00.000Z"
+    updatedAt:
+      type: string
+      format: date-time
+      example: "2023-10-01T12:00:00.000Z"
+  required:
+    - id
+    - displayName
+    - pictureUrl
+    - createdAt
+    - updatedAt
+
+ReviewInput:
+  type: object
+  properties:
+    branchId:
+      type: string
+      format: uuid
+      example: d281eaaf-cb8c-497e-9621-a4a63a4a3fda
+    rating:
+      type: integer
+      minimum: 1
+      maximum: 5
+      example: 5
+    comment:
+      type: string
+      nullable: true
+      example: Great service and friendly staff.
+  required:
+    - branchId
+    - rating
+
+ReviewApprovalInput:
+  type: object
+  properties:
+    isApproved:
+      type: boolean
+      description: Set to true to approve the review or false to mark it as pending.
+      example: true
+  required:
+    - isApproved
+
+ReviewOutput:
+  type: object
+  properties:
+    id:
+      type: string
+      format: uuid
+      example: 4394f1e7-2392-4fbd-9799-5c3d1665a659
+    userId:
+      type: string
+      example: Ub11f11111ff1f1edda111
+    branchId:
+      type: string
+      format: uuid
+      example: 13369aad-ee3b-4c23-b210-384b08ee3513
+    rating:
+      type: integer
+      minimum: 1
+      maximum: 5
+      example: 4
+    comment:
+      type: string
+      nullable: true
+      example: Very relaxing experience.
+    isApproved:
+      type: boolean
+      example: false
+    createdAt:
+      type: string
+      format: date-time
+      example: "2023-10-01T12:00:00.000Z"
+    updatedAt:
+      type: string
+      format: date-time
+      example: "2023-10-01T12:00:00.000Z"
+  required:
+    - id
+    - userId
+    - branchId
+    - rating
+    - isApproved
+    - createdAt
+    - updatedAt
+
+ReviewWithUserOutput:
+  allOf:
+    - $ref: "#/components/schemas/ReviewOutput"
+    - type: object
+      properties:
+        user:
+          type: object
+          properties:
+            id:
+              type: string
+              example: Ub11f11111ff1f1edda111
+            displayName:
+              type: string
+              example: Yung
+            pictureUrl:
+              type: string
+              format: uri
+              example: "https://profile.line-scdn.net/..."
+          required:
+            - id
+            - displayName
+            - pictureUrl
+
+ReviewWithBranchOutput:
+  allOf:
+    - $ref: "#/components/schemas/ReviewWithUserOutput"
+    - type: object
+      properties:
+        branch:
+          type: object
+          properties:
+            id:
+              type: string
+              format: uuid
+              example: 13369aad-ee3b-4c23-b210-384b08ee3513
+            name:
+              type: string
+              example: Main Branch
+          required:
+            - id
+            - name
+
+ApiResponse:
+  type: object
+  properties:
+    status:
+      type: string
+      description: "Response status, e.g. 'success' or 'error'"
+      example: success
+    message:
+      type: string
+      description: Detailed response message
+      example: Operation completed successfully
+  required:
+    - status
+    - message

@@ -1,0 +1,26 @@
+/branch:
+  get:
+    tags:
+      - Branch
+    summary: List available branches
+    description: Retrieves all active branches. Public endpoint.
+    responses:
+      "200":
+        description: List of branches
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: "#/components/schemas/BranchOutput"
+      "500":
+        description: Internal server error
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApiResponse"
+            examples:
+              error:
+                value:
+                  status: error
+                  message: An error occurred while fetching branches

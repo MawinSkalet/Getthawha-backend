@@ -1,0 +1,124 @@
+# File Upload endpoints
+/upload:
+  post:
+    tags:
+      - File Upload
+    summary: Upload a file
+    description: Upload a single file to the server. Only authenticated admin users can access this endpoint.
+    requestBody:
+      required: true
+      content:
+        multipart/form-data:
+          schema:
+            type: object
+            properties:
+              file:
+                type: string
+                format: binary
+                description: File to upload.
+            required:
+              - file
+    responses:
+      "200":
+        description: File uploaded successfully
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                filePath:
+                  type: string
+                  format: uri
+                  example: https://api.example.com/uploads/3bf493ad-cf31-46be-a413-40b50df80b06.jpg
+              required:
+                - filePath
+      "400":
+        description: No file provided in the request
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApiResponse"
+            examples:
+              noFile:
+                value:
+                  status: error
+                  message: No file uploaded.
+      "401":
+        description: Unauthorized - Admin authentication required
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApiResponse"
+            examples:
+              unauthorized:
+                value:
+                  status: error
+                  message: User not authorized to access this resource
+      "403":
+        description: Forbidden - Invalid or expired token
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                error:
+                  type: string
+                  example: Invalid or expired token
+              required:
+                - error
+      "500":
+        description: Internal server error
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApiResponse"
+            examples:
+              error:
+                value:
+                  status: error
+                  message: An unexpected error occurred while uploading the file
+
+/uploads/{filename}:
+  get:
+    tags:
+      - File Upload
+    summary: Retrieve an uploaded file
+    description: Download or view a previously uploaded file by its generated filename.
+    parameters:
+      - name: filename
+        in: path
+        required: true
+        description: The filename returned by the upload endpoint.
+        schema:
+          type: string
+          example: 3bf493ad-cf31-46be-a413-40b50df80b06.jpg
+    responses:
+      "200":
+        description: File returned successfully
+        content:
+          application/octet-stream:
+            schema:
+              type: string
+              format: binary
+      "404":
+        description: File not found
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApiResponse"
+            examples:
+              notFound:
+                value:
+                  status: error
+                  message: File not found
+      "500":
+        description: Internal server error
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApiResponse"
+            examples:
+              error:
+                value:
+                  status: error
+                  message: An unexpected error occurred while retrieving the file

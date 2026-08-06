@@ -1,0 +1,211 @@
+# Admin Staff paths
+/admin/staff:
+  get:
+    tags:
+      - Admin Staff
+    summary: Get all staff members
+    responses:
+      "200":
+        description: List of staff members
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: "#/components/schemas/UserStaffOutput"
+      "401":
+        description: Unauthorized
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApiResponse"
+            examples:
+              unauthorized:
+                value:
+                  status: error
+                  message: User not authorized to access this resource
+      "500":
+        description: Internal server error
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApiResponse"
+            examples:
+              error:
+                value:
+                  status: error
+                  message: An error occurred while fetching staff members
+  post:
+    tags:
+      - Admin Staff
+    summary: Create a new staff member
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/UserStaffInput"
+    responses:
+      "201":
+        description: Staff member created successfully
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserStaffOutput"
+      "400":
+        description: Bad request, invalid input
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApiResponse"
+            examples:
+              invalidInput:
+                value:
+                  status: error
+                  message: Invalid staff data provided
+      "401":
+        description: Unauthorized
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApiResponse"
+            examples:
+              unauthorized:
+                value:
+                  status: error
+                  message: User not authorized to create a staff member
+      "500":
+        description: Internal server error
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApiResponse"
+            examples:
+              error:
+                value:
+                  status: error
+                  message: An error occurred while creating the staff member
+
+/admin/staff/{id}:
+  put:
+    tags:
+      - Admin Staff
+    summary: Update staff member by ID
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/UserStaffInput"
+    responses:
+      "200":
+        description: Staff member updated successfully
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserStaffOutput"
+      "400":
+        description: Bad request, invalid input
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApiResponse"
+            examples:
+              invalidInput:
+                value:
+                  status: error
+                  message: Invalid staff data provided
+      "401":
+        description: Unauthorized
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApiResponse"
+            examples:
+              unauthorized:
+                value:
+                  status: error
+                  message: User not authorized to update this staff member
+      "404":
+        description: Staff member not found
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApiResponse"
+            examples:
+              notFound:
+                value:
+                  status: error
+                  message: Staff member not found
+      "500":
+        description: Internal server error
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApiResponse"
+            examples:
+              error:
+                value:
+                  status: error
+                  message: An error occurred while updating the staff member
+  delete:
+    tags:
+      - Admin Staff
+    summary: Delete staff member by ID
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+    responses:
+      "204":
+        description: Staff member deleted successfully
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApiResponse"
+            examples:
+              success:
+                value:
+                  status: success
+                  message: Staff member deleted successfully
+      "401":
+        description: Unauthorized
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApiResponse"
+            examples:
+              unauthorized:
+                value:
+                  status: error
+                  message: User not authorized to delete this staff member
+      "404":
+        description: Staff member not found
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApiResponse"
+            examples:
+              notFound:
+                value:
+                  status: error
+                  message: Staff member not found
+      "500":
+        description: Internal server error
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApiResponse"
+            examples:
+              error:
+                value:
+                  status: error
+                  message: An error occurred while deleting the staff member

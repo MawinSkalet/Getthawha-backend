@@ -1,0 +1,170 @@
+# Admin Calendar paths
+/admin/calendar/{year}/{month}:
+  get:
+    tags:
+      - Admin Calendar
+    summary: Get daily booking status for a specific month
+    description: Retrieve daily booking status (true/false) for each day of the specified month
+    parameters:
+      - name: year
+        in: path
+        required: true
+        schema:
+          type: integer
+          example: 2025
+        description: Year (e.g., 2025)
+      - name: month
+        in: path
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 12
+          example: 8
+        description: Month (1-12)
+    responses:
+      "200":
+        description: Daily booking status retrieved successfully
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+                  example: success
+                data:
+                  type: object
+                  description: Object with day numbers as keys and booking status as boolean values
+                  additionalProperties:
+                    type: boolean
+                  example:
+                    "1": false
+                    "2": true
+                    "3": false
+                    "4": true
+                    "5": false
+                    "6": true
+                    "7": false
+                    "8": true
+                    "9": false
+                    "10": true
+                    "11": false
+                    "12": true
+                    "13": false
+                    "14": true
+                    "15": false
+                    "16": true
+                    "17": false
+                    "18": true
+                    "19": false
+                    "20": true
+                    "21": false
+                    "22": true
+                    "23": false
+                    "24": true
+                    "25": false
+                    "26": true
+                    "27": false
+                    "28": true
+                    "29": false
+                    "30": true
+                    "31": false
+              required:
+                - status
+                - data
+      "401":
+        description: Unauthorized - Admin authentication required
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApiResponse"
+            examples:
+              unauthorized:
+                value:
+                  status: error
+                  message: User not authorized to access this resource
+      "500":
+        description: Internal server error
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApiResponse"
+            examples:
+              error:
+                value:
+                  status: error
+                  message: An error occurred while fetching calendar data
+
+/admin/calendar/date/{day}/{month}/{year}:
+  get:
+    tags:
+      - Admin Calendar
+    summary: Get bookings for a specific date
+    description: Retrieve all bookings for a specific date with user, package, voucher, and branch details
+    parameters:
+      - name: day
+        in: path
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 31
+          example: 15
+        description: Day of the month (1-31)
+      - name: month
+        in: path
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 12
+          example: 8
+        description: Month (1-12)
+      - name: year
+        in: path
+        required: true
+        schema:
+          type: integer
+          example: 2025
+        description: Year (e.g., 2025)
+    responses:
+      "200":
+        description: Bookings for the specific date retrieved successfully
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+                  example: success
+                data:
+                  type: array
+                  items:
+                    $ref: "#/components/schemas/BookingOutput"
+              required:
+                - status
+                - data
+      "401":
+        description: Unauthorized - Admin authentication required
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApiResponse"
+            examples:
+              unauthorized:
+                value:
+                  status: error
+                  message: User not authorized to access this resource
+      "500":
+        description: Internal server error
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApiResponse"
+            examples:
+              error:
+                value:
+                  status: error
+                  message: An error occurred while fetching booking data

@@ -1,0 +1,210 @@
+/admin/branch:
+  get:
+    tags:
+      - Admin Branch
+    summary: Get all branches
+    responses:
+      "200":
+        description: List of branches
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: "#/components/schemas/BranchOutput"
+      "401":
+        description: Unauthorized
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApiResponse"
+            examples:
+              unauthorized:
+                value:
+                  status: error
+                  message: User not authorized to access this resource
+      "500":
+        description: Internal server error
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApiResponse"
+            examples:
+              error:
+                value:
+                  status: error
+                  message: An error occurred while fetching branches
+  post:
+    tags:
+      - Admin Branch
+    summary: Create a new branch
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/BranchInput"
+    responses:
+      "201":
+        description: Branch created successfully
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BranchOutput"
+      "400":
+        description: Bad request, invalid input
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApiResponse"
+            examples:
+              invalidInput:
+                value:
+                  status: error
+                  message: Invalid branch data provided
+      "401":
+        description: Unauthorized
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApiResponse"
+            examples:
+              unauthorized:
+                value:
+                  status: error
+                  message: User not authorized to create a branch
+      "500":
+        description: Internal server error
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApiResponse"
+            examples:
+              error:
+                value:
+                  status: error
+                  message: An error occurred while creating the branch
+
+/admin/branch/{id}:
+  put:
+    tags:
+      - Admin Branch
+    summary: Update branch by ID
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/BranchInput"
+    responses:
+      "200":
+        description: Branch updated successfully
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BranchOutput"
+      "400":
+        description: Bad request, invalid input
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApiResponse"
+            examples:
+              invalidInput:
+                value:
+                  status: error
+                  message: Invalid branch data provided
+      "401":
+        description: Unauthorized
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApiResponse"
+            examples:
+              unauthorized:
+                value:
+                  status: error
+                  message: User not authorized to update this branch
+      "404":
+        description: Branch not found
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApiResponse"
+            examples:
+              notFound:
+                value:
+                  status: error
+                  message: Branch not found
+      "500":
+        description: Internal server error
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApiResponse"
+            examples:
+              error:
+                value:
+                  status: error
+                  message: An error occurred while updating the branch
+  delete:
+    tags:
+      - Admin Branch
+    summary: Delete branch by ID
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+    responses:
+      "204":
+        description: Branch deleted successfully
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApiResponse"
+            examples:
+              success:
+                value:
+                  status: success
+                  message: Branch deleted successfully
+      "401":
+        description: Unauthorized
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApiResponse"
+            examples:
+              unauthorized:
+                value:
+                  status: error
+                  message: User not authorized to delete this branch
+      "404":
+        description: Branch not found
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApiResponse"
+            examples:
+              notFound:
+                value:
+                  status: error
+                  message: Branch not found
+      "500":
+        description: Internal server error
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApiResponse"
+            examples:
+              error:
+                value:
+                  status: error
+                  message: An error occurred while deleting the branch

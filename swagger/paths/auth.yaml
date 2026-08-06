@@ -1,0 +1,323 @@
+/line/authentication:
+  get:
+    tags:
+      - Auth
+    summary: Redirect to LINE OAuth
+    description: Redirects the user to the LINE login page for OAuth authentication.
+    responses:
+      "302":
+        description: Redirect to LINE OAuth
+        headers:
+          Location:
+            description: The URL to LINE's OAuth login page
+            schema:
+              type: string
+              format: uri
+              example: https://access.line.me/oauth2/v2.1/authorize?...client_id=...
+      "500":
+        description: Internal server error
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApiResponse"
+            examples:
+              error:
+                value:
+                  status: error
+                  message: An error occurred while redirecting to LINE OAuth
+
+/line/authorization:
+  get:
+    tags:
+      - Auth
+    summary: Handle LINE OAuth callback
+    description: Handles the callback from LINE after user authentication and retrieves user information.
+    parameters:
+      - name: code
+        in: query
+        required: true
+        schema:
+          type: string
+    responses:
+      "200":
+        description: User authenticated successfully
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  example: Login Success
+                profile:
+                  type: object
+                  properties:
+                    userId:
+                      type: string
+                      description: The LINE user ID
+                    displayName:
+                      type: string
+                      description: The display name of the user
+                    pictureUrl:
+                      type: string
+                      description: The URL of the user's profile picture
+                  required:
+                    - userId
+                    - displayName
+                    - pictureUrl
+            examples:
+              success:
+                value:
+                  message: Login Success
+                  profile:
+                    userId: U1234567890abcdef1234567890abcdef
+                    displayName: John Doe
+                    pictureUrl: https://example.com/profile.jpg
+      "400":
+        description: Bad request, missing or invalid parameters
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApiResponse"
+            examples:
+              invalidCode:
+                value:
+                  status: error
+                  message: Invalid or missing code parameter
+      "403":
+        description: Forbidden, user not authorized
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApiResponse"
+            examples:
+              unauthorized:
+                value:
+                  status: error
+                  message: User not authorized to access this resource
+      "500":
+        description: Internal server error
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApiResponse"
+            examples:
+              error:
+                value:
+                  status: error
+                  message: An error occurred while processing the authorization
+  post:
+    tags:
+      - Auth
+    summary: Handle LINE Auth with idToken
+    description: Handles the LINE authentication using an idToken to retrieve user information.
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              idToken:
+                type: string
+            required:
+              - idToken
+    responses:
+      "200":
+        description: User authenticated successfully
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+                  example: success
+                message:
+                  type: string
+                  example: User authenticated successfully
+                user:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      description: The LINE user ID
+                    displayName:
+                      type: string
+                      description: The display name of the user
+                    pictureUrl:
+                      type: string
+                      description: The URL of the user's profile picture
+                  required:
+                    - id
+                    - displayName
+                    - pictureUrl
+              required:
+                - status
+                - message
+                - user
+            examples:
+              success:
+                value:
+                  status: success
+                  message: User authenticated successfully
+                  user:
+                    id: Ub12323123123
+                    displayName: Yung
+                    pictureUrl: https://example.com/img.png
+      "400":
+        description: Bad request, missing or invalid parameters
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApiResponse"
+            examples:
+              invalidCode:
+                value:
+                  status: error
+                  message: Invalid or missing code parameter
+      "403":
+        description: Forbidden, user not authorized
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApiResponse"
+            examples:
+              unauthorized:
+                value:
+                  status: error
+                  message: User not authorized to access this resource
+      "500":
+        description: Internal server error
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApiResponse"
+            examples:
+              error:
+                value:
+                  status: error
+                  message: An error occurred while processing the authorization
+
+/admin/auth/login:
+  post:
+    tags:
+      - Auth
+    summary: Handle Staff Login
+    description: Handles the login for staff members
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              username:
+                type: string
+                example: admin
+              password:
+                type: string
+                format: password
+                example: password123
+            required:
+              - username
+              - password
+    responses:
+      "200":
+        description: User authenticated successfully
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  example: Authorization successful
+                user:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      description: The unique identifier of the user
+                    username:
+                      type: string
+                      description: The username of the user
+                    email:
+                      type: string
+                      description: The email address of the user
+                  required:
+                    - id
+                    - username
+                    - email
+      "401":
+        description: Unauthorized, user not authorized
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApiResponse"
+            examples:
+              unauthorized:
+                value:
+                  status: error
+                  message: User not authorized to access this resource
+      "404":
+        description: Not Found, user not found
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApiResponse"
+            examples:
+              notFound:
+                value:
+                  status: error
+                  message: User not found
+      "500":
+        description: Internal server error
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApiResponse"
+            examples:
+              error:
+                value:
+                  status: error
+                  message: An error occurred while processing the authorization
+/line/logout:
+  get:
+    tags:
+      - Auth
+    summary: Handle LINE Logout
+    description: Logs the user out from LINE and invalidates the session.
+    responses:
+      "200":
+        description: User logged out successfully
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+                  example: success
+                message:
+                  type: string
+                  example: User logged out successfully
+              required:
+                - status
+                - message
+            examples:
+              success:
+                value:
+                  status: success
+                  message: User logged out successfully
+      "500":
+        description: Internal server error
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApiResponse"
+            examples:
+              error:
+                value:
+                  status: error
+                  message: An error occurred while logging out the user
