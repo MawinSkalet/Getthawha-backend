@@ -2,3 +2,6 @@
 node_modules/
 .DS_Store
 uploads/*
+# Local/production secrets; sanitized templates may be committed.
+.env.*
+!.env.*.example

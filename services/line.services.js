@@ -3,6 +3,7 @@ import dotenv from "dotenv";
 import axios from "axios";
 import { randomBytes } from "crypto";
 import { User } from "../models/index";
+import {safeReturnPath,frontendUrl,authCookieOptions,loginFailure} from "./oauth.helpers";
 dotenv.config();
 
 function generateState(length = 20) {
@@ -130,6 +131,7 @@ async function authorization(req, res) {
         expiresIn: "1h",
       });
 
+      res.clearCookie("loginReturn",authCookieOptions());
       return res
         .cookie("info", jwtToken, {
           httpOnly: true,
@@ -139,7 +141,7 @@ async function authorization(req, res) {
           domain: process.env.COOKIE_DOMAIN,
         })
         .status(201)
-        .redirect(process.env.REDIRECT_URI_AFTER_LOGIN);
+        .redirect(frontendUrl(safeReturnPath(req.cookies.loginReturn)));
     }
   } catch (err) {
     res
@@ -150,6 +152,8 @@ async function authorization(req, res) {
 
 async function authentication(req, res) {
   try {
+    if (!process.env.CLIENT_ID || !process.env.CLIENT_SECRET || !process.env.REDIRECT_URI) return loginFailure(res,"not_configured",req.query.next);
+    res.cookie("loginReturn",safeReturnPath(req.query.next),{...authCookieOptions(),maxAge:600000});
     const state = generateState();
 
     res.cookie("lineState", state, {
@@ -185,4 +189,34 @@ async function logout(req, res) {
   }
 }
 
-export { authentication, authorization, logout };
+async function devLogin(req, res) {
+  try {
+    const userId = req.query.userId || "user-demo-001";
+    let user = await User.findOne({ where: { id: userId } });
+
+    if (!user) {
+      user = await User.create({
+        id: userId,
+        displayName: "Getthawa Guest",
+        pictureUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb",
+      });
+    }
+
+    const jwtToken = jwt.sign({ id: user.id }, process.env.JWT_SECRET, {
+      expiresIn: "1d",
+    });
+
+    return res
+      .cookie("info", jwtToken, {
+        httpOnly: true,
+        sameSite: "lax",
+        secure: process.env.NODE_ENV === "production",
+        maxAge: 86400000,
+      })
+      .redirect(process.env.REDIRECT_URI_AFTER_LOGIN || "http://localhost:3000");
+  } catch (err) {
+    res.status(500).json({ error: "Dev login error", detail: err.message });
+  }
+}
+
+export { authentication, authorization, logout, devLogin };

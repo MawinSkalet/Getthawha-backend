@@ -16,6 +16,7 @@ const app = express();
 
 //import routes
 import lineRouter from "./controllers/line.routes";
+import googleRouter from "./controllers/google.routes";
 import staffAuthRouter from "./controllers/staffAuth.routes";
 import voucherRouter from "./controllers/voucher.routes";
 import branchRouter from "./controllers/branch.routes";
@@ -31,12 +32,14 @@ import userPackageRouter from "./controllers/userPackage.routes";
 import userVoucherRouter from "./controllers/userVoucher.routes";
 import reviewRouter from "./controllers/review.routes";
 import userReviewRouter from "./controllers/userReview.routes";
+import facebookRouter from "./controllers/facebook.routes";
 
 //setup middlewares
 app.use(cookieParser());
 app.use(
   cors({
     origin: [
+      ...(process.env.FRONTEND_ORIGIN ? [new URL(process.env.FRONTEND_ORIGIN).origin] : []),
       "http://localhost:3000",
       "http://localhost:3001",
       "http://127.0.0.1:3000",
@@ -72,6 +75,7 @@ app.get("/", (req, res) => {
 });
 
 app.use("/line", lineRouter);
+app.use("/google", googleRouter);
 app.use("/admin/auth", staffAuthRouter);
 app.use("/admin/voucher", voucherRouter);
 app.use("/admin/branch", branchRouter);
@@ -87,6 +91,7 @@ app.use("/branch", userBranchRouter);
 app.use("/package", userPackageRouter);
 app.use("/voucher", userVoucherRouter);
 app.use("/review", userReviewRouter);
+app.use("/facebook", facebookRouter);
 
 //-=-=-=-=-should edit above this line to add your routes-=-=-=-=-//
 
