@@ -1,0 +1,235 @@
+# Admin Dashboard paths
+/admin/dashboard:
+  get:
+    tags:
+      - Admin Dashboard
+    summary: Get dashboard overview statistics
+    description: Retrieve key metrics for the admin dashboard including total bookings, revenue, users, and today's bookings
+    responses:
+      "200":
+        description: Dashboard statistics retrieved successfully
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                totalBookings:
+                  type: integer
+                  example: 1234
+                totalRevenue:
+                  type: number
+                  format: float
+                  example: 125500.75
+                totalUsers:
+                  type: integer
+                  example: 567
+                todayBooking:
+                  type: integer
+                  example: 15
+              required:
+                - totalBookings
+                - totalRevenue
+                - totalUsers
+                - todayBooking
+      "401":
+        description: Unauthorized - Admin authentication required
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApiResponse"
+            examples:
+              unauthorized:
+                value:
+                  status: error
+                  message: User not authorized to access this resource
+      "500":
+        description: Internal server error
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApiResponse"
+            examples:
+              error:
+                value:
+                  status: error
+                  message: An error occurred while fetching dashboard data
+
+/admin/dashboard/trending:
+  get:
+    tags:
+      - Admin Dashboard
+    summary: Get monthly booking trends
+    description: Retrieve monthly booking statistics for trend analysis throughout the year
+    responses:
+      "200":
+        description: Monthly booking trends retrieved successfully
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                type: object
+                properties:
+                  name:
+                    type: string
+                    example: January
+                  totalBookings:
+                    type: integer
+                    example: 123
+                required:
+                  - name
+                  - totalBookings
+      "401":
+        description: Unauthorized - Admin authentication required
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApiResponse"
+            examples:
+              unauthorized:
+                value:
+                  status: error
+                  message: User not authorized to access this resource
+      "500":
+        description: Internal server error
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApiResponse"
+            examples:
+              error:
+                value:
+                  status: error
+                  message: An error occurred while fetching trending data
+
+/admin/dashboard/branch-performance:
+  get:
+    tags:
+      - Admin Dashboard
+    summary: Get branch performance statistics
+    description: Retrieve booking performance statistics for each branch
+    responses:
+      "200":
+        description: Branch performance statistics retrieved successfully
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                type: object
+                properties:
+                  branchId:
+                    type: string
+                    example: d281eaaf-cb8c-497e-9621-a4a63a4a3fda
+                  name:
+                    type: string
+                    example: Rimping
+                  totalBooking:
+                    type: integer
+                    example: 123
+                required:
+                  - branchId
+                  - name
+                  - totalBooking
+      "401":
+        description: Unauthorized - Admin authentication required
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApiResponse"
+            examples:
+              unauthorized:
+                value:
+                  status: error
+                  message: User not authorized to access this resource
+      "500":
+        description: Internal server error
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApiResponse"
+            examples:
+              error:
+                value:
+                  status: error
+                  message: An error occurred while fetching branch performance data
+
+/admin/dashboard/recent-activity/{day}/{month}/{year}:
+  get:
+    tags:
+      - Admin Dashboard
+    summary: Get recent user activity for a specific day
+    description: Retrieve up to 10 of the most recent users created on the specified day in the business timezone
+    parameters:
+      - name: day
+        in: path
+        required: true
+        description: Day of the month (1-31)
+        schema:
+          type: integer
+          example: 5
+      - name: month
+        in: path
+        required: true
+        description: Month of the year (1-12)
+        schema:
+          type: integer
+          example: 7
+      - name: year
+        in: path
+        required: true
+        description: Four-digit year
+        schema:
+          type: integer
+          example: 2024
+    responses:
+      "200":
+        description: Recent user activity retrieved successfully
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    example: 1822e517-5c51-4bb5-bba3-4b64b7aae61f
+                  displayName:
+                    type: string
+                    example: Yung Ying
+                  pictureUrl:
+                    type: string
+                    format: uri
+                    example: https://cdn.example.com/profile/yung-ying.jpg
+                  createdAt:
+                    type: string
+                    format: date-time
+                    example: 2024-07-05T08:15:30.000Z
+                required:
+                  - id
+                  - displayName
+                  - pictureUrl
+                  - createdAt
+      "401":
+        description: Unauthorized - Admin authentication required
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApiResponse"
+            examples:
+              unauthorized:
+                value:
+                  status: error
+                  message: User not authorized to access this resource
+      "500":
+        description: Internal server error
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApiResponse"
+            examples:
+              error:
+                value:
+                  status: error
+                  message: An error occurred while fetching recent activity data

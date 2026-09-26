@@ -1,0 +1,3752 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Getthawha API",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/line/authentication": {
+      "get": {
+        "tags": ["Auth"],
+        "summary": "Redirect to LINE OAuth",
+        "description": "Redirects the user to the LINE login page for OAuth authentication.",
+        "responses": {
+          "302": {
+            "description": "Redirect to LINE OAuth",
+            "headers": {
+              "Location": {
+                "description": "The URL to LINE's OAuth login page",
+                "schema": {
+                  "type": "string",
+                  "format": "uri",
+                  "example": "https://access.line.me/oauth2/v2.1/authorize?...client_id=..."
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "error": {
+                    "value": {
+                      "status": "error",
+                      "message": "An error occurred while redirecting to LINE OAuth"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/line/authorization": {
+      "get": {
+        "tags": ["Auth"],
+        "summary": "Handle LINE OAuth callback",
+        "description": "Handles the callback from LINE after user authentication and retrieves user information.",
+        "parameters": [
+          {
+            "name": "code",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "User authenticated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Login Success"
+                    },
+                    "profile": {
+                      "type": "object",
+                      "properties": {
+                        "userId": {
+                          "type": "string",
+                          "description": "The LINE user ID"
+                        },
+                        "displayName": {
+                          "type": "string",
+                          "description": "The display name of the user"
+                        },
+                        "pictureUrl": {
+                          "type": "string",
+                          "description": "The URL of the user's profile picture"
+                        }
+                      },
+                      "required": ["userId", "displayName", "pictureUrl"]
+                    }
+                  }
+                },
+                "examples": {
+                  "success": {
+                    "value": {
+                      "message": "Login Success",
+                      "profile": {
+                        "userId": "U1234567890abcdef1234567890abcdef",
+                        "displayName": "John Doe",
+                        "pictureUrl": "https://example.com/profile.jpg"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request, missing or invalid parameters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "invalidCode": {
+                    "value": {
+                      "status": "error",
+                      "message": "Invalid or missing code parameter"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden, user not authorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "unauthorized": {
+                    "value": {
+                      "status": "error",
+                      "message": "User not authorized to access this resource"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "error": {
+                    "value": {
+                      "status": "error",
+                      "message": "An error occurred while processing the authorization"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Handle LINE Auth with idToken",
+        "description": "Handles the LINE authentication using an idToken to retrieve user information.",
+        "parameters": [
+          {
+            "name": "idToken",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "User authenticated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "example": "success"
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "User authenticated successfully"
+                    },
+                    "user": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "description": "The LINE user ID"
+                        },
+                        "displayName": {
+                          "type": "string",
+                          "description": "The display name of the user"
+                        },
+                        "pictureUrl": {
+                          "type": "string",
+                          "description": "The URL of the user's profile picture"
+                        }
+                      },
+                      "required": ["id", "displayName", "pictureUrl"]
+                    }
+                  },
+                  "required": ["status", "message", "user"]
+                },
+                "examples": {
+                  "success": {
+                    "value": {
+                      "status": "success",
+                      "message": "User authenticated successfully",
+                      "user": {
+                        "id": "Ub12323123123",
+                        "displayName": "Yung",
+                        "pictureUrl": "https://example.com/img.png"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request, missing or invalid parameters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "invalidCode": {
+                    "value": {
+                      "status": "error",
+                      "message": "Invalid or missing code parameter"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden, user not authorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "unauthorized": {
+                    "value": {
+                      "status": "error",
+                      "message": "User not authorized to access this resource"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "error": {
+                    "value": {
+                      "status": "error",
+                      "message": "An error occurred while processing the authorization"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/auth/login": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Handle Staff Login",
+        "description": "Handles the login for staff members",
+        "responses": {
+          "200": {
+            "description": "User authenticated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Authorization successful"
+                    },
+                    "user": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "description": "The unique identifier of the user"
+                        },
+                        "username": {
+                          "type": "string",
+                          "description": "The username of the user"
+                        },
+                        "email": {
+                          "type": "string",
+                          "description": "The email address of the user"
+                        }
+                      },
+                      "required": ["id", "username", "email"]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized, user not authorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "unauthorized": {
+                    "value": {
+                      "status": "error",
+                      "message": "User not authorized to access this resource"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found, user not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "notFound": {
+                    "value": {
+                      "status": "error",
+                      "message": "User not found"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "error": {
+                    "value": {
+                      "status": "error",
+                      "message": "An error occurred while processing the authorization"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/booking": {
+      "get": {
+        "tags": ["Booking"],
+        "summary": "Get all bookings of a user",
+        "description": "Retrieve all bookings for the authenticated user. Authentication can be done via cookie (info).",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Page number for pagination",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 1,
+              "minimum": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of bookings for the user",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/BookingOutput"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - User authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "unauthorized": {
+                    "value": {
+                      "status": "error",
+                      "message": "User not authorized to access this resource"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - Invalid or expired token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "invalidToken": {
+                    "value": {
+                      "error": "Invalid or expired token"
+                    }
+                  },
+                  "invalidIdToken": {
+                    "value": {
+                      "error": "Invalid or expired ID token"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "error": {
+                    "value": {
+                      "status": "error",
+                      "message": "An error occurred while fetching bookings"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Booking"],
+        "summary": "Create a new booking",
+        "description": "Creates a new booking for the authenticated user. Authentication can be provided via cookies.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BookingInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Booking created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BookingOutput"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request, invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "invalidInput": {
+                    "value": {
+                      "status": "error",
+                      "message": "Invalid booking data provided"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - User authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "unauthorized": {
+                    "value": {
+                      "status": "error",
+                      "message": "User not authorized to access this resource"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - Invalid or expired token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "invalidToken": {
+                    "value": {
+                      "error": "Invalid or expired token"
+                    }
+                  },
+                  "invalidIdToken": {
+                    "value": {
+                      "error": "Invalid or expired ID token"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "error": {
+                    "value": {
+                      "status": "error",
+                      "message": "An error occurred while creating the booking"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/booking/{id}": {
+      "put": {
+        "tags": ["Booking"],
+        "summary": "Update booking by ID",
+        "description": "Updates an existing booking for the authenticated user. Authentication can be provided via cookies.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BookingInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Booking updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BookingOutput"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request, invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "invalidInput": {
+                    "value": {
+                      "status": "error",
+                      "message": "Invalid booking data provided"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "unauthorized": {
+                    "value": {
+                      "status": "error",
+                      "message": "User not authorized to update this booking"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Booking not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "notFound": {
+                    "value": {
+                      "status": "error",
+                      "message": "Booking not found"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "error": {
+                    "value": {
+                      "status": "error",
+                      "message": "An error occurred while updating the booking"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Booking"],
+        "summary": "Delete booking by ID",
+        "description": "Deletes an existing booking for the authenticated user. Authentication can be provided via cookies.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Booking deleted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "success": {
+                    "value": {
+                      "status": "success",
+                      "message": "Booking deleted successfully"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - User authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "unauthorized": {
+                    "value": {
+                      "status": "error",
+                      "message": "User not authorized to delete this booking"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - Invalid or expired token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "invalidToken": {
+                    "value": {
+                      "error": "Invalid or expired token"
+                    }
+                  },
+                  "invalidIdToken": {
+                    "value": {
+                      "error": "Invalid or expired ID token"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Booking not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "notFound": {
+                    "value": {
+                      "status": "error",
+                      "message": "Booking not found"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "error": {
+                    "value": {
+                      "status": "error",
+                      "message": "An error occurred while deleting the booking"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/booking": {
+      "get": {
+        "tags": ["Admin Booking"],
+        "summary": "Get all bookings for admin",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Page number for pagination",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 1,
+              "minimum": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of all bookings",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/BookingOutput"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "unauthorized": {
+                    "value": {
+                      "status": "error",
+                      "message": "User not authorized to access this resource"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "error": {
+                    "value": {
+                      "status": "error",
+                      "message": "An error occurred while fetching bookings"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Admin Booking"],
+        "summary": "Create a new booking as admin",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BookingWithUserInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Booking created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BookingOutput"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request, invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "invalidInput": {
+                    "value": {
+                      "status": "error",
+                      "message": "Invalid booking data provided"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "unauthorized": {
+                    "value": {
+                      "status": "error",
+                      "message": "User not authorized to create a booking"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "error": {
+                    "value": {
+                      "status": "error",
+                      "message": "An error occurred while creating the booking"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/booking/{id}": {
+      "put": {
+        "tags": ["Admin Booking"],
+        "summary": "Update booking by ID as admin",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BookingWithUserInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Booking updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BookingOutput"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request, invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "invalidInput": {
+                    "value": {
+                      "status": "error",
+                      "message": "Invalid booking data provided"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "unauthorized": {
+                    "value": {
+                      "status": "error",
+                      "message": "User not authorized to update this booking"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Booking not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "notFound": {
+                    "value": {
+                      "status": "error",
+                      "message": "Booking not found"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "error": {
+                    "value": {
+                      "status": "error",
+                      "message": "An error occurred while updating the booking"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Admin Booking"],
+        "summary": "Delete booking by ID as admin",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Booking deleted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "success": {
+                    "value": {
+                      "status": "success",
+                      "message": "Booking deleted successfully"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "unauthorized": {
+                    "value": {
+                      "status": "error",
+                      "message": "User not authorized to delete this booking"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Booking not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "notFound": {
+                    "value": {
+                      "status": "error",
+                      "message": "Booking not found"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "error": {
+                    "value": {
+                      "status": "error",
+                      "message": "An error occurred while deleting the booking"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/branch": {
+      "get": {
+        "tags": ["Admin Branch"],
+        "summary": "Get all branches",
+        "responses": {
+          "200": {
+            "description": "List of branches",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/BranchOutput"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "unauthorized": {
+                    "value": {
+                      "status": "error",
+                      "message": "User not authorized to access this resource"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "error": {
+                    "value": {
+                      "status": "error",
+                      "message": "An error occurred while fetching branches"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Admin Branch"],
+        "summary": "Create a new branch",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BranchInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Branch created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BranchOutput"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request, invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "invalidInput": {
+                    "value": {
+                      "status": "error",
+                      "message": "Invalid branch data provided"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "unauthorized": {
+                    "value": {
+                      "status": "error",
+                      "message": "User not authorized to create a branch"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "error": {
+                    "value": {
+                      "status": "error",
+                      "message": "An error occurred while creating the branch"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/branch/{id}": {
+      "put": {
+        "tags": ["Admin Branch"],
+        "summary": "Update branch by ID",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BranchInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Branch updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BranchOutput"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request, invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "invalidInput": {
+                    "value": {
+                      "status": "error",
+                      "message": "Invalid branch data provided"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "unauthorized": {
+                    "value": {
+                      "status": "error",
+                      "message": "User not authorized to update this branch"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Branch not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "notFound": {
+                    "value": {
+                      "status": "error",
+                      "message": "Branch not found"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "error": {
+                    "value": {
+                      "status": "error",
+                      "message": "An error occurred while updating the branch"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Admin Branch"],
+        "summary": "Delete branch by ID",
+        "parameters": [
+          {
+            "name": ":id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Branch deleted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "success": {
+                    "value": {
+                      "status": "success",
+                      "message": "Branch deleted successfully"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "unauthorized": {
+                    "value": {
+                      "status": "error",
+                      "message": "User not authorized to delete this branch"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Branch not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "notFound": {
+                    "value": {
+                      "status": "error",
+                      "message": "Branch not found"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "error": {
+                    "value": {
+                      "status": "error",
+                      "message": "An error occurred while deleting the branch"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/package": {
+      "get": {
+        "tags": ["Admin Package"],
+        "summary": "Get all packages",
+        "responses": {
+          "200": {
+            "description": "List of packages",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PackageOutput"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "unauthorized": {
+                    "value": {
+                      "status": "error",
+                      "message": "User not authorized to access this resource"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "error": {
+                    "value": {
+                      "status": "error",
+                      "message": "An error occurred while fetching packages"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Admin Package"],
+        "summary": "Create a new package",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PackageInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Package created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PackageOutput"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request, invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "invalidInput": {
+                    "value": {
+                      "status": "error",
+                      "message": "Invalid package data provided"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "unauthorized": {
+                    "value": {
+                      "status": "error",
+                      "message": "User not authorized to create a package"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "error": {
+                    "value": {
+                      "status": "error",
+                      "message": "An error occurred while creating the package"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/package/{id}": {
+      "put": {
+        "tags": ["Admin Package"],
+        "summary": "Update package by ID",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PackageInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Package updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PackageOutput"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request, invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "invalidInput": {
+                    "value": {
+                      "status": "error",
+                      "message": "Invalid package data provided"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "unauthorized": {
+                    "value": {
+                      "status": "error",
+                      "message": "User not authorized to update this package"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Package not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "notFound": {
+                    "value": {
+                      "status": "error",
+                      "message": "Package not found"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "error": {
+                    "value": {
+                      "status": "error",
+                      "message": "An error occurred while updating the package"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Admin Package"],
+        "summary": "Delete package by ID",
+        "parameters": [
+          {
+            "name": ":id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Package deleted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "success": {
+                    "value": {
+                      "status": "success",
+                      "message": "Package deleted successfully"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "unauthorized": {
+                    "value": {
+                      "status": "error",
+                      "message": "User not authorized to delete this package"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Package not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "notFound": {
+                    "value": {
+                      "status": "error",
+                      "message": "Package not found"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "error": {
+                    "value": {
+                      "status": "error",
+                      "message": "An error occurred while deleting the package"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/voucher": {
+      "get": {
+        "tags": ["Admin Voucher"],
+        "summary": "Get all vouchers",
+        "responses": {
+          "200": {
+            "description": "List of vouchers",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/VoucherOutput"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "unauthorized": {
+                    "value": {
+                      "status": "error",
+                      "message": "User not authorized to access this resource"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "error": {
+                    "value": {
+                      "status": "error",
+                      "message": "An error occurred while fetching vouchers"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Admin Voucher"],
+        "summary": "Create a new voucher",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VoucherInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Voucher created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VoucherOutput"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request, invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "invalidInput": {
+                    "value": {
+                      "status": "error",
+                      "message": "Invalid voucher data provided"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "unauthorized": {
+                    "value": {
+                      "status": "error",
+                      "message": "User not authorized to create a voucher"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "error": {
+                    "value": {
+                      "status": "error",
+                      "message": "An error occurred while creating the voucher"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/voucher/{id}": {
+      "put": {
+        "tags": ["Admin Voucher"],
+        "summary": "Update voucher by ID",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VoucherInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Voucher updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VoucherOutput"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request, invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "invalidInput": {
+                    "value": {
+                      "status": "error",
+                      "message": "Invalid voucher data provided"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "unauthorized": {
+                    "value": {
+                      "status": "error",
+                      "message": "User not authorized to update this voucher"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Voucher not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "notFound": {
+                    "value": {
+                      "status": "error",
+                      "message": "Voucher not found"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "error": {
+                    "value": {
+                      "status": "error",
+                      "message": "An error occurred while updating the voucher"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Admin Voucher"],
+        "summary": "Delete voucher by ID",
+        "parameters": [
+          {
+            "name": ":id",
+            "in": ":path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Voucher deleted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "success": {
+                    "value": {
+                      "status": "success",
+                      "message": "Voucher deleted successfully"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "unauthorized": {
+                    "value": {
+                      "status": "error",
+                      "message": "User not authorized to delete this voucher"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Voucher not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "notFound": {
+                    "value": {
+                      "status": "error",
+                      "message": "Voucher not found"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "error": {
+                    "value": {
+                      "status": "error",
+                      "message": "An error occurred while deleting the voucher"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/staff": {
+      "get": {
+        "tags": ["Admin Staff"],
+        "summary": "Get all staff members",
+        "responses": {
+          "200": {
+            "description": "List of staff members",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/UserStaffOutput"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "unauthorized": {
+                    "value": {
+                      "status": "error",
+                      "message": "User not authorized to access this resource"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "error": {
+                    "value": {
+                      "status": "error",
+                      "message": "An error occurred while fetching staff members"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Admin Staff"],
+        "summary": "Create a new staff member",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserStaffInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Staff member created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserStaffOutput"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request, invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "invalidInput": {
+                    "value": {
+                      "status": "error",
+                      "message": "Invalid staff data provided"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "unauthorized": {
+                    "value": {
+                      "status": "error",
+                      "message": "User not authorized to create a staff member"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "error": {
+                    "value": {
+                      "status": "error",
+                      "message": "An error occurred while creating the staff member"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/staff/{id}": {
+      "put": {
+        "tags": ["Admin Staff"],
+        "summary": "Update staff member by ID",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserStaffInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Staff member updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserStaffOutput"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request, invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "invalidInput": {
+                    "value": {
+                      "status": "error",
+                      "message": "Invalid staff data provided"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "unauthorized": {
+                    "value": {
+                      "status": "error",
+                      "message": "User not authorized to update this staff member"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Staff member not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "notFound": {
+                    "value": {
+                      "status": "error",
+                      "message": "Staff member not found"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "error": {
+                    "value": {
+                      "status": "error",
+                      "message": "An error occurred while updating the staff member"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Admin Staff"],
+        "summary": "Delete staff member by ID",
+        "parameters": [
+          {
+            "name": ":id",
+            "in": ":path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Staff member deleted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "success": {
+                    "value": {
+                      "status": "success",
+                      "message": "Staff member deleted successfully"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "unauthorized": {
+                    "value": {
+                      "status": "error",
+                      "message": "User not authorized to delete this staff member"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Staff member not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "notFound": {
+                    "value": {
+                      "status": "error",
+                      "message": "Staff member not found"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "error": {
+                    "value": {
+                      "status": "error",
+                      "message": "An error occurred while deleting the staff member"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/dashboard": {
+      "get": {
+        "tags": ["Admin Dashboard"],
+        "summary": "Get dashboard overview statistics",
+        "description": "Retrieve key metrics for the admin dashboard including total bookings, revenue, users, and today's bookings",
+        "responses": {
+          "200": {
+            "description": "Dashboard statistics retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "totalBookings": {
+                      "type": "integer",
+                      "description": "Total number of bookings",
+                      "example": 1234
+                    },
+                    "totalRevenue": {
+                      "type": "number",
+                      "format": "float",
+                      "description": "Total revenue generated",
+                      "example": 125500.75
+                    },
+                    "totalUsers": {
+                      "type": "integer",
+                      "description": "Total number of registered users",
+                      "example": 567
+                    },
+                    "todayBooking": {
+                      "type": "integer",
+                      "description": "Number of bookings made today",
+                      "example": 15
+                    }
+                  },
+                  "required": [
+                    "totalBookings",
+                    "totalRevenue",
+                    "totalUsers",
+                    "todayBooking"
+                  ]
+                },
+                "examples": {
+                  "success": {
+                    "value": {
+                      "totalBookings": 1234,
+                      "totalRevenue": 125500.75,
+                      "totalUsers": 567,
+                      "todayBooking": 15
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Admin authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "error": {
+                    "value": {
+                      "status": "error",
+                      "message": "Admin authentication required"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "error": {
+                    "value": {
+                      "status": "error",
+                      "message": "An error occurred while fetching dashboard statistics"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/dashboard/trending": {
+      "get": {
+        "tags": ["Admin Dashboard"],
+        "summary": "Get monthly booking trends",
+        "description": "Retrieve monthly booking statistics for trend analysis throughout the year",
+        "responses": {
+          "200": {
+            "description": "Monthly booking trends retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "name": {
+                        "type": "string",
+                        "description": "Month name",
+                        "example": "January"
+                      },
+                      "totalBookings": {
+                        "type": "integer",
+                        "description": "Total bookings for the month",
+                        "example": 123
+                      }
+                    },
+                    "required": ["name", "totalBookings"]
+                  }
+                },
+                "examples": {
+                  "success": {
+                    "value": [
+                      {
+                        "name": "January",
+                        "totalBookings": 123
+                      },
+                      {
+                        "name": "February",
+                        "totalBookings": 156
+                      },
+                      {
+                        "name": "March",
+                        "totalBookings": 189
+                      },
+                      {
+                        "name": "April",
+                        "totalBookings": 167
+                      },
+                      {
+                        "name": "May",
+                        "totalBookings": 201
+                      },
+                      {
+                        "name": "June",
+                        "totalBookings": 234
+                      },
+                      {
+                        "name": "July",
+                        "totalBookings": 278
+                      },
+                      {
+                        "name": "August",
+                        "totalBookings": 245
+                      },
+                      {
+                        "name": "September",
+                        "totalBookings": 223
+                      },
+                      {
+                        "name": "October",
+                        "totalBookings": 198
+                      },
+                      {
+                        "name": "November",
+                        "totalBookings": 167
+                      },
+                      {
+                        "name": "December",
+                        "totalBookings": 456
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Admin authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "error": {
+                    "value": {
+                      "status": "error",
+                      "message": "Admin authentication required"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "error": {
+                    "value": {
+                      "status": "error",
+                      "message": "An error occurred while fetching booking trends"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/dashboard/branch-performance": {
+      "get": {
+        "tags": ["Admin Dashboard"],
+        "summary": "Get branch performance statistics",
+        "description": "Retrieve booking performance statistics for each branch",
+        "responses": {
+          "200": {
+            "description": "Branch performance statistics retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "branchId": {
+                        "type": "string",
+                        "description": "Unique identifier of the branch",
+                        "example": "d281eaaf-cb8c-497e-9621-a4a63a4a3fda"
+                      },
+                      "name": {
+                        "type": "string",
+                        "description": "Name of the branch",
+                        "example": "Rimping"
+                      },
+                      "totalBooking": {
+                        "type": "integer",
+                        "description": "Total number of bookings for this branch",
+                        "example": 123
+                      }
+                    },
+                    "required": ["branchId", "name", "totalBooking"]
+                  }
+                },
+                "examples": {
+                  "success": {
+                    "value": [
+                      {
+                        "branchId": "d281eaaf-cb8c-497e-9621-a4a63a4a3fda",
+                        "name": "Rimping",
+                        "totalBooking": 123
+                      },
+                      {
+                        "branchId": "e392fbbf-dc9d-5a8f-a732-b5b74b5b4eeb",
+                        "name": "Rimping2",
+                        "totalBooking": 456
+                      },
+                      {
+                        "branchId": "f4a3fccf-ed0e-6b9f-b843-c6c85c6c5ffc",
+                        "name": "Central Plaza",
+                        "totalBooking": 289
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Admin authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "error": {
+                    "value": {
+                      "status": "error",
+                      "message": "Admin authentication required"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "error": {
+                    "value": {
+                      "status": "error",
+                      "message": "An error occurred while fetching branch performance data"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/calendar/{year}/{month}": {
+      "get": {
+        "tags": ["Admin Calendar"],
+        "summary": "Get daily booking status for a specific month",
+        "description": "Retrieve daily booking status (true/false) for each day of the specified month",
+        "parameters": [
+          {
+            "name": "year",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "example": 2025
+            },
+            "description": "Year (e.g., 2025)"
+          },
+          {
+            "name": "month",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 12,
+              "example": 8
+            },
+            "description": "Month (1-12)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Daily booking status retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "example": "success"
+                    },
+                    "data": {
+                      "type": "object",
+                      "description": "Object with day numbers as keys and booking status as boolean values",
+                      "additionalProperties": {
+                        "type": "boolean"
+                      },
+                      "example": {
+                        "1": true,
+                        "2": false,
+                        "3": true,
+                        "4": false,
+                        "5": true
+                      }
+                    }
+                  },
+                  "required": ["status", "data"]
+                },
+                "examples": {
+                  "success": {
+                    "value": {
+                      "status": "success",
+                      "data": {
+                        "1": true,
+                        "2": false,
+                        "3": true,
+                        "4": false,
+                        "5": true,
+                        "6": false,
+                        "7": true,
+                        "8": false,
+                        "9": false,
+                        "10": true
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Admin authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "error": {
+                    "value": {
+                      "status": "error",
+                      "message": "Admin authentication required"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "error": {
+                    "value": {
+                      "status": "error",
+                      "message": "An error occurred while fetching daily booking status by month"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/calendar/date/{day}/{month}/{year}": {
+      "get": {
+        "tags": ["Admin Calendar"],
+        "summary": "Get bookings for a specific date",
+        "description": "Retrieve all bookings for a specific date with user, package, voucher, and branch details",
+        "parameters": [
+          {
+            "name": "day",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 31,
+              "example": 15
+            },
+            "description": "Day of the month (1-31)"
+          },
+          {
+            "name": "month",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 12,
+              "example": 8
+            },
+            "description": "Month (1-12)"
+          },
+          {
+            "name": "year",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "example": 2025
+            },
+            "description": "Year (e.g., 2025)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Bookings for the specific date retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "example": "success"
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/BookingOutput"
+                      }
+                    }
+                  },
+                  "required": ["status", "data"]
+                },
+                "examples": {
+                  "success": {
+                    "value": {
+                      "status": "success",
+                      "data": [
+                        {
+                          "id": "4394f1e7-2392-4fbd-9799-5c3d1665a659",
+                          "date": "2025-08-15T10:00:00.000Z",
+                          "duration": 60,
+                          "totalPrice": "25.00",
+                          "user": {
+                            "id": "Ub11f11111ff1f1edda111",
+                            "displayName": "John Doe",
+                            "pictureUrl": "https://profile.line-scdn.net/example.jpg"
+                          },
+                          "branch": {
+                            "id": "13369aad-ee3b-4c23-b210-384b08ee3513",
+                            "name": "Main Branch"
+                          },
+                          "package": {
+                            "id": "50e91e6c-1387-4402-818a-7879c0409675",
+                            "title": "Thai Massage"
+                          },
+                          "voucher": {
+                            "id": "voucher-123",
+                            "code": "DISCOUNT10"
+                          }
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Admin authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "error": {
+                    "value": {
+                      "status": "error",
+                      "message": "Admin authentication required"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "error": {
+                    "value": {
+                      "status": "error",
+                      "message": "An error occurred while fetching bookings by date"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/user": {
+      "get": {
+        "tags": ["Admin Users"],
+        "summary": "Get all users",
+        "description": "Retrieve a paginated list of all registered users",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 1,
+              "minimum": 1
+            },
+            "description": "Page number for pagination (default: 1)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Users retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/UserOutput"
+                  }
+                },
+                "examples": {
+                  "success": {
+                    "value": [
+                      {
+                        "id": "Ub11f11111ff1f1edda111",
+                        "displayName": "John Doe",
+                        "pictureUrl": "https://profile.line-scdn.net/example.jpg",
+                        "createdAt": "2023-10-01T12:00:00.000Z",
+                        "updatedAt": "2023-10-01T12:00:00.000Z"
+                      },
+                      {
+                        "id": "Uc22f22222ff2f2edda222",
+                        "displayName": "Jane Smith",
+                        "pictureUrl": "https://profile.line-scdn.net/example2.jpg",
+                        "createdAt": "2023-10-02T10:30:00.000Z",
+                        "updatedAt": "2023-10-02T10:30:00.000Z"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Admin authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "error": {
+                    "value": {
+                      "status": "error",
+                      "message": "Admin authentication required"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "error": {
+                    "value": {
+                      "status": "error",
+                      "message": "An error occurred while fetching users"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/user/search": {
+      "get": {
+        "tags": ["Admin Users"],
+        "summary": "Search users by display name",
+        "description": "Search for users by their display name using case-insensitive partial matching",
+        "parameters": [
+          {
+            "name": "query",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Search query to match against user display names"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Users found successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/UserOutput"
+                  }
+                },
+                "examples": {
+                  "success": {
+                    "value": [
+                      {
+                        "id": "Ub11f11111ff1f1edda111",
+                        "displayName": "John Doe",
+                        "pictureUrl": "https://profile.line-scdn.net/example.jpg",
+                        "createdAt": "2023-10-01T12:00:00.000Z",
+                        "updatedAt": "2023-10-01T12:00:00.000Z"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Admin authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "error": {
+                    "value": {
+                      "status": "error",
+                      "message": "Admin authentication required"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "error": {
+                    "value": {
+                      "status": "error",
+                      "message": "An error occurred while searching for users"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/user/{id}": {
+      "get": {
+        "tags": ["Admin Users"],
+        "summary": "Get user by ID",
+        "description": "Retrieve a specific user by their ID",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The unique identifier of the user"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "User retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserOutput"
+                },
+                "examples": {
+                  "success": {
+                    "value": {
+                      "id": "Ub11f11111ff1f1edda111",
+                      "displayName": "John Doe",
+                      "pictureUrl": "https://profile.line-scdn.net/example.jpg",
+                      "createdAt": "2023-10-01T12:00:00.000Z",
+                      "updatedAt": "2023-10-01T12:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Admin authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "error": {
+                    "value": {
+                      "status": "error",
+                      "message": "Admin authentication required"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "User not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "error": {
+                    "value": {
+                      "status": "error",
+                      "message": "User not found"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                },
+                "examples": {
+                  "error": {
+                    "value": {
+                      "status": "error",
+                      "message": "An error occurred while fetching the user"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "BookingOutput": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "4394f1e7-2392-4fbd-9799-5c3d1665a659"
+          },
+          "date": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2023-10-01T12:00:00.000Z"
+          },
+          "duration": {
+            "type": "integer",
+            "example": 30
+          },
+          "totalPrice": {
+            "type": "string",
+            "example": "25.00"
+          },
+          "user": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "example": "Ub11f11111ff1f1edda111"
+              },
+              "displayName": {
+                "type": "string",
+                "example": "Yung"
+              },
+              "pictureUrl": {
+                "type": "string",
+                "format": "uri",
+                "example": "https://profile.line-scdn.net/..."
+              }
+            },
+            "required": ["id", "displayName", "pictureUrl"]
+          },
+          "branch": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "example": "13369aad-ee3b-4c23-b210-384b08ee3513"
+              },
+              "name": {
+                "type": "string",
+                "example": "Main Branch"
+              }
+            },
+            "required": ["id", "name"]
+          },
+          "package": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "example": "50e91e6c-1387-4402-818a-7879c0409675"
+              },
+              "title": {
+                "type": "string",
+                "example": "XYZ Massage"
+              }
+            },
+            "required": ["id", "title"]
+          },
+          "voucher": {
+            "type": ["object", "null"],
+            "nullable": true,
+            "properties": {
+              "id": {
+                "type": "string",
+                "example": "voucher-id-123"
+              },
+              "code": {
+                "type": "string",
+                "example": "DISCOUNT50"
+              }
+            },
+            "required": ["id", "code"]
+          }
+        },
+        "required": [
+          "id",
+          "date",
+          "duration",
+          "totalPrice",
+          "user",
+          "branch",
+          "package"
+        ]
+      },
+      "BookingInput": {
+        "type": "object",
+        "properties": {
+          "branchId": {
+            "type": "string",
+            "example": "d281eaaf-cb8c-497e-9621-a4a63a4a3fda"
+          },
+          "packageId": {
+            "type": "string",
+            "example": "d281eaaf-cb8c-497e-9621-a4a63a4a3fda"
+          },
+          "voucherId": {
+            "type": "string",
+            "example": "d281eaaf-cb8c-497e-9621-a4a63a4a3fda"
+          },
+          "date": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2023-10-01T12:00:00Z"
+          },
+          "duration": {
+            "type": "integer",
+            "example": 3
+          }
+        },
+        "required": ["branchId", "packageId", "voucherId", "date", "duration"]
+      },
+      "BranchInput": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Main Branch"
+          },
+          "address": {
+            "type": "string",
+            "example": "123 Main St, City, Country"
+          },
+          "googleMapUrl": {
+            "type": "string",
+            "format": "uri",
+            "example": "https://maps.google.com/?q=123+Main+St,+City,+Country"
+          },
+          "phone": {
+            "type": "string",
+            "example": "+1234567890"
+          }
+        },
+        "required": ["name", "address", "googleMapUrl", "phone"]
+      },
+      "BranchOutput": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "d281eaaf-cb8c-497e-9621-a4a63a4a3fda"
+          },
+          "name": {
+            "type": "string",
+            "example": "Main Branch"
+          },
+          "address": {
+            "type": "string",
+            "example": "123 Main St, City, Country"
+          },
+          "googleMapUrl": {
+            "type": "string",
+            "format": "uri",
+            "example": "https://maps.google.com/?q=123+Main+St,+City,+Country"
+          },
+          "phone": {
+            "type": "string",
+            "example": "+1234567890"
+          }
+        },
+        "required": ["id", "name", "address", "googleMapUrl", "phone"]
+      },
+      "PackageInput": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "example": "XYZ Massage"
+          },
+          "description": {
+            "type": "string",
+            "example": "A thai massage package that includes a full body massage and aromatherapy."
+          },
+          "price": {
+            "type": "number",
+            "format": "float",
+            "example": 25.0
+          },
+          "duration": {
+            "type": "integer",
+            "example": 60
+          },
+          "pictureUrl": {
+            "type": "string",
+            "format": "uri",
+            "example": "https://example.com/package.jpg"
+          },
+          "note": {
+            "type": "string",
+            "example": "Optional note for the package"
+          }
+        },
+        "required": ["title", "description", "price", "duration", "pictureUrl"]
+      },
+      "PackageOutput": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "d281eaaf-cb8c-497e-9621-a4a63a4a3fda"
+          },
+          "title": {
+            "type": "string",
+            "example": "XYZ Massage"
+          },
+          "description": {
+            "type": "string",
+            "example": "A thai massage package that includes a full body massage and aromatherapy."
+          },
+          "price": {
+            "type": "number",
+            "format": "float",
+            "example": 25.0
+          },
+          "duration": {
+            "type": "integer",
+            "example": 60
+          },
+          "pictureUrl": {
+            "type": "string",
+            "format": "uri",
+            "example": "https://example.com/package.jpg"
+          },
+          "note": {
+            "type": "string",
+            "example": "Optional note for the package"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "description",
+          "price",
+          "duration",
+          "pictureUrl"
+        ]
+      },
+      "VoucherInput": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "example": "WELCOME10"
+          },
+          "discount": {
+            "type": "float",
+            "example": 10.0
+          },
+          "isExpired": {
+            "type": "boolean",
+            "example": false
+          }
+        },
+        "required": ["code", "discount", "isExpired"]
+      },
+      "VoucherOutput": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "d281eaaf-cb8c-497e-9621-a4a63a4a3fda"
+          },
+          "code": {
+            "type": "string",
+            "example": "WELCOME10"
+          },
+          "discount": {
+            "type": "number",
+            "format": "float",
+            "example": 10.0
+          },
+          "isExpired": {
+            "type": "boolean",
+            "example": false
+          }
+        },
+        "required": ["id", "code", "discount", "isExpired"]
+      },
+      "UserStaffInput": {
+        "type": "object",
+        "properties": {
+          "username": {
+            "type": "string",
+            "example": "staffuser"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "example": "example@mail.com"
+          },
+          "password": {
+            "type": "string",
+            "format": "password",
+            "example": "securepassword123"
+          }
+        },
+        "required": ["username", "email", "password"]
+      },
+      "UserStaffOutput": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "d281eaaf-cb8c-497e-9621-a4a63a4a3fda"
+          },
+          "username": {
+            "type": "string",
+            "example": "staffuser"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "example": "example@mail.com"
+          }
+        },
+        "required": ["id", "username", "email"]
+      },
+      "ApiResponse": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "description": "Response status, e.g. 'success' or 'error'",
+            "example": "success"
+          },
+          "message": {
+            "type": "string",
+            "description": "Detailed response message",
+            "example": "Operation completed successfully"
+          }
+        },
+        "required": ["status", "message"]
+      },
+      "UserOutput": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "some user-id"
+          },
+          "displayName": {
+            "type": "string",
+            "example": "John Doe"
+          },
+          "pictureUrl": {
+            "type": "string",
+            "format": "uri",
+            "example": "https://example.com/profile.jpg"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2023-10-01T12:00:00.000Z"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2023-10-01T12:00:00.000Z"
+          }
+        },
+        "required": [
+          "id",
+          "displayName",
+          "pictureUrl",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+
+      "BookingWithUserInput": {
+        "type": "object",
+        "properties": {
+          "branchId": {
+            "type": "string",
+            "example": "d281eaaf-cb8c-497e-9621-a4a63a4a3fda"
+          },
+          "packageId": {
+            "type": "string",
+            "example": "d281eaaf-cb8c-497e-9621-a4a63a4a3fda"
+          },
+          "voucherId": {
+            "type": "string",
+            "example": "d281eaaf-cb8c-497e-9621-a4a63a4a3fda"
+          },
+          "date": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2023-10-01T12:00:00Z"
+          },
+          "duration": {
+            "type": "integer",
+            "example": 3
+          },
+          "userId": {
+            "type": "string",
+            "example": "d281eaaf-cb8c-497e-9621-a4a63a4a3fda"
+          }
+        },
+        "required": [
+          "branchId",
+          "packageId",
+          "voucherId",
+          "date",
+          "duration",
+          "userId"
+        ]
+      }
+    }
+  }
+}

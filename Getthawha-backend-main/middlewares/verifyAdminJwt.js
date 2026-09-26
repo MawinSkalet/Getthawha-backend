@@ -1,0 +1,33 @@
+import jwt from "jsonwebtoken";
+import { UserStaff } from "../models/index";
+
+async function verifyAdminJwt(req, res, next) {
+  const token = req.cookies.admin;
+
+  if (!token)
+    return res.status(401).json({
+      status: "error",
+      message: "User not authorized to access this resource",
+    });
+
+  try {
+    //decoded will has only id
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+    // Check if this userId in UserStaff
+    const user = await UserStaff.findOne({ where: { id: decoded.id } });
+
+    if (!user) {
+      return res.status(401).json({
+        status: "error",
+        message: "User not authorized to access this resource",
+      });
+    }
+
+    next();
+  } catch (err) {
+    return res.status(403).json({ error: "Invalid or expired token" });
+  }
+}
+
+export default verifyAdminJwt;

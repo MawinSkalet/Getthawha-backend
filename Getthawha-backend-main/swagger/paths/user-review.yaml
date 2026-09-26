@@ -1,0 +1,183 @@
+/review/branch/{branchId}:
+  get:
+    tags:
+      - Review
+    summary: List approved reviews for a branch
+    description: Retrieves all approved reviews for the specified branch. Public endpoint.
+    parameters:
+      - name: branchId
+        in: path
+        required: true
+        description: Branch identifier
+        schema:
+          type: string
+          format: uuid
+    responses:
+      "200":
+        description: List of approved reviews for the branch
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: "#/components/schemas/ReviewWithUserOutput"
+      "404":
+        description: Branch not found
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApiResponse"
+            examples:
+              notFound:
+                value:
+                  status: error
+                  message: Branch not found
+      "500":
+        description: Internal server error
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApiResponse"
+            examples:
+              error:
+                value:
+                  status: error
+                  message: An error occurred while retrieving reviews
+
+/review/me:
+  get:
+    tags:
+      - Review
+    summary: List reviews submitted by the authenticated user
+    description: Returns the user's reviews along with branch information. Requires authentication via cookies.
+    responses:
+      "200":
+        description: List of the user's reviews
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: "#/components/schemas/ReviewWithBranchOutput"
+      "401":
+        description: Unauthorized - User authentication required
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApiResponse"
+            examples:
+              unauthorized:
+                value:
+                  status: error
+                  message: User not authorized to perform this action
+      "403":
+        description: Forbidden - Invalid or expired token
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApiResponse"
+            examples:
+              invalidToken:
+                value:
+                  error: Invalid or expired token
+      "500":
+        description: Internal server error
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApiResponse"
+            examples:
+              error:
+                value:
+                  status: error
+                  message: An error occurred while retrieving your reviews
+
+/review:
+  post:
+    tags:
+      - Review
+    summary: Submit a review for a branch
+    description: Creates a review for a branch. The user must have completed a booking for the branch and can only submit one review per branch.
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ReviewInput"
+    responses:
+      "201":
+        description: Review submitted successfully
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReviewOutput"
+      "400":
+        description: Bad request, invalid input
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApiResponse"
+            examples:
+              missingFields:
+                value:
+                  status: error
+                  message: Branch and rating are required
+              invalidRating:
+                value:
+                  status: error
+                  message: Rating must be an integer between 1 and 5
+      "401":
+        description: Unauthorized - User authentication required
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApiResponse"
+            examples:
+              unauthorized:
+                value:
+                  status: error
+                  message: User not authorized to perform this action
+      "403":
+        description: Forbidden - User not eligible to submit a review
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApiResponse"
+            examples:
+              notEligible:
+                value:
+                  status: error
+                  message: You can only review branches you have completed a booking with
+      "404":
+        description: Branch not found
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApiResponse"
+            examples:
+              notFound:
+                value:
+                  status: error
+                  message: Branch not found
+      "409":
+        description: Conflict - Duplicate review
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApiResponse"
+            examples:
+              duplicated:
+                value:
+                  status: error
+                  message: You have already submitted a review for this branch
+      "500":
+        description: Internal server error
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApiResponse"
+            examples:
+              error:
+                value:
+                  status: error
+                  message: An error occurred while submitting the review

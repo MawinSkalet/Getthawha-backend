@@ -1,0 +1,107 @@
+openapi: 3.1.0
+info:
+  title: Getthawha API
+  version: 1.0.0
+
+paths:
+  # Auth endpoints
+  /line/authentication:
+    $ref: "./paths/auth.yaml#/~1line~1authentication"
+  /line/authorization:
+    $ref: "./paths/auth.yaml#/~1line~1authorization"
+  /admin/auth/login:
+    $ref: "./paths/auth.yaml#/~1admin~1auth~1login"
+
+  # Booking endpoints
+  /booking:
+    $ref: "./paths/booking.yaml#/~1booking"
+  /booking/{id}:
+    $ref: "./paths/booking.yaml#/~1booking~1{id}"
+
+  # User endpoints
+  /userinfo/me:
+    $ref: "./paths/user-info.yaml#/~1userinfo~1me"
+  /branch:
+    $ref: "./paths/user-branch.yaml#/~1branch"
+  /package:
+    $ref: "./paths/user-package.yaml#/~1package"
+  /voucher/{code}:
+    $ref: "./paths/user-voucher.yaml#/~1voucher~1{code}"
+  /review/branch/{branchId}:
+    $ref: "./paths/user-review.yaml#/~1review~1branch~1{branchId}"
+  /review:
+    $ref: "./paths/user-review.yaml#/~1review"
+  /review/me:
+    $ref: "./paths/user-review.yaml#/~1review~1me"
+  /review/testimonials:
+    $ref: "./paths/testimonials.yaml#/~1review~1testimonials"
+
+  # File Upload endpoints
+  /upload:
+    $ref: "./paths/upload.yaml#/~1upload"
+  /uploads/{filename}:
+    $ref: "./paths/upload.yaml#/~1uploads~1{filename}"
+
+  # Admin Booking endpoints
+  /admin/booking:
+    $ref: "./paths/admin-booking.yaml#/~1admin~1booking"
+  /admin/booking/{id}:
+    $ref: "./paths/admin-booking.yaml#/~1admin~1booking~1{id}"
+
+  # Admin Branch endpoints
+  /admin/branch:
+    $ref: "./paths/admin-branch.yaml#/~1admin~1branch"
+  /admin/branch/{id}:
+    $ref: "./paths/admin-branch.yaml#/~1admin~1branch~1{id}"
+
+  # Admin Package endpoints
+  /admin/package:
+    $ref: "./paths/admin-package.yaml#/~1admin~1package"
+  /admin/package/{id}:
+    $ref: "./paths/admin-package.yaml#/~1admin~1package~1{id}"
+
+  # Admin Voucher endpoints
+  /admin/voucher:
+    $ref: "./paths/admin-voucher.yaml#/~1admin~1voucher"
+  /admin/voucher/{id}:
+    $ref: "./paths/admin-voucher.yaml#/~1admin~1voucher~1{id}"
+
+  # Admin Staff endpoints
+  /admin/staff:
+    $ref: "./paths/admin-staff.yaml#/~1admin~1staff"
+  /admin/staff/{id}:
+    $ref: "./paths/admin-staff.yaml#/~1admin~1staff~1{id}"
+
+  # Admin Dashboard endpoints
+  /admin/dashboard:
+    $ref: "./paths/admin-dashboard.yaml#/~1admin~1dashboard"
+  /admin/dashboard/trending:
+    $ref: "./paths/admin-dashboard.yaml#/~1admin~1dashboard~1trending"
+  /admin/dashboard/branch-performance:
+    $ref: "./paths/admin-dashboard.yaml#/~1admin~1dashboard~1branch-performance"
+
+  # Admin Calendar endpoints
+  /admin/calendar/{year}/{month}:
+    $ref: "./paths/admin-calendar.yaml#/~1admin~1calendar~1{year}~1{month}"
+  /admin/calendar/date/{day}/{month}/{year}:
+    $ref: "./paths/admin-calendar.yaml#/~1admin~1calendar~1date~1{day}~1{month}~1{year}"
+
+  # Admin Review endpoints
+  /admin/review:
+    $ref: "./paths/admin-review.yaml#/~1admin~1review"
+  /admin/review/{id}/approval:
+    $ref: "./paths/admin-review.yaml#/~1admin~1review~1{id}~1approval"
+  /admin/review/{id}:
+    $ref: "./paths/admin-review.yaml#/~1admin~1review~1{id}"
+
+  # Admin Users endpoints
+  /admin/user:
+    $ref: "./paths/admin-users.yaml#/~1admin~1user"
+  /admin/user/search:
+    $ref: "./paths/admin-users.yaml#/~1admin~1user~1search"
+  /admin/user/{id}:
+    $ref: "./paths/admin-users.yaml#/~1admin~1user~1{id}"
+
+components:
+  schemas:
+    $ref: "./components/schemas.yaml"
