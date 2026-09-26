@@ -1,0 +1,73 @@
+/voucher/{code}:
+  get:
+    tags:
+      - Voucher
+    summary: Check voucher validity by code
+    description: Requires user authentication via `info` cookie.
+    parameters:
+      - name: code
+        in: path
+        required: true
+        schema:
+          type: string
+    responses:
+      "200":
+        description: Voucher is valid
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VoucherOutput"
+      "400":
+        description: Voucher expired or invalid state
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApiResponse"
+            examples:
+              expired:
+                value:
+                  status: error
+                  message: Voucher is expired
+      "401":
+        description: Unauthorized - Missing or invalid user auth
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApiResponse"
+            examples:
+              unauthorized:
+                value:
+                  status: error
+                  message: User not authorized to access this resource
+      "403":
+        description: Forbidden - Invalid or expired token
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApiResponse"
+            examples:
+              invalidToken:
+                value:
+                  error: Invalid or expired token
+      "404":
+        description: Voucher not found
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApiResponse"
+            examples:
+              notFound:
+                value:
+                  status: error
+                  message: Voucher not found
+      "500":
+        description: Internal server error
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApiResponse"
+            examples:
+              error:
+                value:
+                  status: error
+                  message: An error occurred while checking voucher validity

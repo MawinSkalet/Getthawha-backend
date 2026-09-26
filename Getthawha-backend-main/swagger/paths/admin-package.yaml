@@ -1,0 +1,211 @@
+# Admin Package paths - extracted from original swagger.json
+/admin/package:
+  get:
+    tags:
+      - Admin Package
+    summary: Get all packages
+    responses:
+      "200":
+        description: List of packages
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: "#/components/schemas/PackageOutput"
+      "401":
+        description: Unauthorized
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApiResponse"
+            examples:
+              unauthorized:
+                value:
+                  status: error
+                  message: User not authorized to access this resource
+      "500":
+        description: Internal server error
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApiResponse"
+            examples:
+              error:
+                value:
+                  status: error
+                  message: An error occurred while fetching packages
+  post:
+    tags:
+      - Admin Package
+    summary: Create a new package
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/PackageInput"
+    responses:
+      "201":
+        description: Package created successfully
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PackageOutput"
+      "400":
+        description: Bad request, invalid input
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApiResponse"
+            examples:
+              invalidInput:
+                value:
+                  status: error
+                  message: Invalid package data provided
+      "401":
+        description: Unauthorized
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApiResponse"
+            examples:
+              unauthorized:
+                value:
+                  status: error
+                  message: User not authorized to create a package
+      "500":
+        description: Internal server error
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApiResponse"
+            examples:
+              error:
+                value:
+                  status: error
+                  message: An error occurred while creating the package
+
+/admin/package/{id}:
+  put:
+    tags:
+      - Admin Package
+    summary: Update package by ID
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/PackageInput"
+    responses:
+      "200":
+        description: Package updated successfully
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PackageOutput"
+      "400":
+        description: Bad request, invalid input
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApiResponse"
+            examples:
+              invalidInput:
+                value:
+                  status: error
+                  message: Invalid package data provided
+      "401":
+        description: Unauthorized
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApiResponse"
+            examples:
+              unauthorized:
+                value:
+                  status: error
+                  message: User not authorized to update this package
+      "404":
+        description: Package not found
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApiResponse"
+            examples:
+              notFound:
+                value:
+                  status: error
+                  message: Package not found
+      "500":
+        description: Internal server error
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApiResponse"
+            examples:
+              error:
+                value:
+                  status: error
+                  message: An error occurred while updating the package
+  delete:
+    tags:
+      - Admin Package
+    summary: Delete package by ID
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+    responses:
+      "204":
+        description: Package deleted successfully
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApiResponse"
+            examples:
+              success:
+                value:
+                  status: success
+                  message: Package deleted successfully
+      "401":
+        description: Unauthorized
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApiResponse"
+            examples:
+              unauthorized:
+                value:
+                  status: error
+                  message: User not authorized to delete this package
+      "404":
+        description: Package not found
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApiResponse"
+            examples:
+              notFound:
+                value:
+                  status: error
+                  message: Package not found
+      "500":
+        description: Internal server error
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApiResponse"
+            examples:
+              error:
+                value:
+                  status: error
+                  message: An error occurred while deleting the package
