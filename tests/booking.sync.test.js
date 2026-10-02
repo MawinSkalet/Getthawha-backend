@@ -1,4 +1,6 @@
-import {beforeEach,describe,it,expect,mock} from "bun:test";
+import {afterAll,beforeEach,describe,it,expect,mock} from "bun:test";
+const originalOwnerEmails=process.env.OWNER_NOTIFICATION_EMAILS;
+process.env.OWNER_NOTIFICATION_EMAILS="owner@example.com";
 let record,notificationFails=false,emailNotifications=[];
 const packages={p1:{id:"p1",title:"Thai",price:"300.00",isActive:true},p2:{id:"p2",title:"Aroma",price:"650.00",isActive:true}};
 const branch={id:"b1",name:"Branch",isActive:true};
@@ -11,6 +13,7 @@ mock.module("../models/index",()=>({
 }));
 mock.module("../utils/sendNotifications",()=>({sendUserNotification:async()=>{if(notificationFails)throw Error("Notification unavailable")},sendEmailNotification:async(...args)=>{emailNotifications.push(args)}}));
 const customer=await import("../services/userbooking.services");const admin=await import("../services/booking.services");
+afterAll(()=>{if(originalOwnerEmails===undefined)delete process.env.OWNER_NOTIFICATION_EMAILS;else process.env.OWNER_NOTIFICATION_EMAILS=originalOwnerEmails;});
 const tomorrow=()=>new Date(Date.now()+86400000).toISOString();
 function response(){return {code:200,body:null,status(code){this.code=code;return this},json(body){this.body=body;return this},send(){return this}};}
 async function call(fn,body={},params={}){const res=response();const requestBody=fn===customer.createBooking?{customerEmail:"guest@example.com",...body}:body;await fn({body:requestBody,params,query:{},user:{id:"u1",displayName:"Guest"}},res);return res;}

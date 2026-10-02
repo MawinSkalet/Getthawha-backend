@@ -1,7 +1,7 @@
+import "dotenv/config";
 import express from "express";
 import cookieParser from "cookie-parser";
 import cors from "cors";
-import dotenv from "dotenv";
 import multer from "multer";
 import { v4 as uuidv4 } from "uuid";
 import path from "path";
@@ -9,8 +9,6 @@ import verifyAdminJwt from "./middlewares/verifyAdminJwt";
 import { connect, sync } from "./config/database";
 import swaggerUi from "swagger-ui-express";
 import swaggerDocument from "./swagger.json";
-
-dotenv.config();
 
 const app = express();
 
