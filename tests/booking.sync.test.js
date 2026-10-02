@@ -21,10 +21,17 @@ beforeEach(()=>{record=null;notificationFails=false;emailNotifications=[];packag
 describe("customer/admin booking synchronization",()=>{
  it("requires a valid customer email and stores notification details",async()=>{
   for(const customerEmail of ["", "not-an-email"]){const invalid=await call(customer.createBooking,{branchId:"b1",packageId:"p1",date:tomorrow(),customerEmail});expect(invalid.code).toBe(400);expect(record).toBeNull();}
-  const created=await call(customer.createBooking,{branchId:"b1",packageId:"p1",date:tomorrow(),customerEmail:"  Guest@Example.com ",customerName:" Guest Name ",numberOfGuests:2});
-  expect(created.code).toBe(201);expect(record).toMatchObject({customerEmail:"guest@example.com",customerName:"Guest Name",numberOfGuests:2,source:"website"});
+  const created=await call(customer.createBooking,{branchId:"b1",packageId:"p1",date:tomorrow(),customerEmail:"  Guest@Example.com ",customerName:" Guest Name ",customerPhone:" 081-234-5678 ",numberOfGuests:2});
+  expect(created.code).toBe(201);expect(record).toMatchObject({customerEmail:"guest@example.com",customerName:"Guest Name",customerPhone:"081-234-5678",numberOfGuests:2,source:"website"});
   expect(emailNotifications).toHaveLength(2);expect(emailNotifications[0][2]).toEqual(["owner@example.com"]);expect(emailNotifications[1][2]).toEqual(["guest@example.com"]);
   expect(emailNotifications[0][1]).toContain("Persons: 2");expect(emailNotifications[1][1]).toContain("Thai");
+ });
+ it("accepts an omitted phone and rejects an invalid phone",async()=>{
+  const invalid=await call(customer.createBooking,{branchId:"b1",packageId:"p1",date:tomorrow(),customerPhone:"call me"});expect(invalid.code).toBe(400);expect(record).toBeNull();
+  const created=await call(customer.createBooking,{branchId:"b1",packageId:"p1",date:tomorrow()});expect(created.code).toBe(201);expect(record.customerPhone).toBeNull();
+ });
+ it("stores a contact phone on admin-created bookings",async()=>{
+  const created=await call(admin.createBooking,{userId:"u1",branchId:"b1",packageId:"p1",date:tomorrow(),customerPhone:"081-234-5678"});expect(created.code).toBe(201);expect(record.customerPhone).toBe("081-234-5678");
  });
  it("uses the same persisted price and status across customer/admin updates",async()=>{
   const created=await call(customer.createBooking,{branchId:"b1",packageId:"p1",date:tomorrow()});expect(created.code).toBe(201);

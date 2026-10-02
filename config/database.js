@@ -36,6 +36,7 @@ async function sync() {
     const newColumns = {
       customerEmail: { type: Sequelize.STRING, allowNull: true },
       customerName: { type: Sequelize.STRING, allowNull: true },
+      customerPhone: { type: Sequelize.STRING, allowNull: true },
       numberOfGuests: {
         type: Sequelize.INTEGER,
         allowNull: false,

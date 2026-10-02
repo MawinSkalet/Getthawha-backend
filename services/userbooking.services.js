@@ -42,7 +42,7 @@ async function getAllBooking(req, res) {
     const bookings = await Booking.findAll({
       attributes: [
         "id", "date", "totalPrice", "status", "customerEmail",
-        "customerName", "numberOfGuests", "source",
+        "customerName", "customerPhone", "numberOfGuests", "source",
       ],
       include: [
         {
@@ -83,6 +83,7 @@ async function createBooking(req, res) {
       date,
       customerEmail,
       customerName,
+      customerPhone,
       numberOfGuests = 1,
       source = "website",
     } = req.body;
@@ -90,6 +91,7 @@ async function createBooking(req, res) {
     const normalizedSource = String(source || "website").trim().toLowerCase();
     const parsedGuests = Number(numberOfGuests);
     const resolvedCustomerName = String(customerName || req.user.displayName || "Customer").trim();
+    const normalizedCustomerPhone = String(customerPhone || "").trim();
 
     if (!branchId || !packageId || !date || !normalizedCustomerEmail) {
       return res.status(400).json({
@@ -109,6 +111,9 @@ async function createBooking(req, res) {
     if (!resolvedCustomerName || resolvedCustomerName.length > 120) {
       return res.status(400).json({ status: "error", message: "Customer name must be 1 to 120 characters" });
     }
+    if (normalizedCustomerPhone && !/^[\d+().\s-]{5,32}$/.test(normalizedCustomerPhone)) {
+      return res.status(400).json({ status: "error", message: "Please provide a valid phone number" });
+    }
     const { packageInfo, branchInfo, totalPrice } = await resolveBookingData({ branchId, packageId, voucherId, date });
     const newBooking = await Booking.create({
       userId: req.user.id,
@@ -119,6 +124,7 @@ async function createBooking(req, res) {
       totalPrice,
       customerEmail: normalizedCustomerEmail,
       customerName: resolvedCustomerName,
+      customerPhone: normalizedCustomerPhone || null,
       numberOfGuests: parsedGuests,
       source: normalizedSource,
     });
@@ -168,6 +174,7 @@ async function createBooking(req, res) {
         voucherId: newBooking.voucherId,
         customerEmail: newBooking.customerEmail,
         customerName: newBooking.customerName,
+        customerPhone: newBooking.customerPhone,
         numberOfGuests: newBooking.numberOfGuests,
         source: newBooking.source,
         date: newBooking.date,

@@ -32,6 +32,10 @@ const Booking = sequelize.define("bookings", {
     type: DataTypes.STRING,
     allowNull: true,
   },
+  customerPhone: {
+    type: DataTypes.STRING,
+    allowNull: true,
+  },
   numberOfGuests: {
     type: DataTypes.INTEGER,
     allowNull: false,

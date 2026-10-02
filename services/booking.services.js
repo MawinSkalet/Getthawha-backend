@@ -16,7 +16,7 @@ async function getAllBooking(req, res) {
     const { page = 1 } = req.query;
     // Fetch all bookings from the database
     const bookings = await Booking.findAll({
-      attributes: ["id", "date", "totalPrice", "status"],
+      attributes: ["id", "date", "totalPrice", "status", "customerName", "customerPhone"],
       include: [
         {
           model: User,
@@ -49,13 +49,17 @@ async function getAllBooking(req, res) {
 
 async function createBooking(req, res) {
   try {
-    const { userId, branchId, packageId, voucherId, date } = req.body;
+    const { userId, branchId, packageId, voucherId, date, customerPhone } = req.body;
     // Validate input
     if (!userId || !branchId || !packageId || !date) {
       return res.status(400).json({
         status: "error",
         message: "Invalid booking data provided",
       });
+    }
+    const normalizedCustomerPhone = String(customerPhone || "").trim();
+    if (normalizedCustomerPhone && !/^[\d+().\s-]{5,32}$/.test(normalizedCustomerPhone)) {
+      return res.status(400).json({ status: "error", message: "Please provide a valid phone number" });
     }
     const {packageInfo,totalPrice} = await resolveBookingData({branchId,packageId,voucherId,date});
     // Create a new Booking
@@ -65,6 +69,7 @@ async function createBooking(req, res) {
       packageId,
       voucherId,
       date,
+      customerPhone: normalizedCustomerPhone || null,
       totalPrice, // Assuming totalPrice is calculated later
     });
 
@@ -142,7 +147,7 @@ async function createBooking(req, res) {
 async function updateBooking(req, res) {
   try {
     const { id } = req.params;
-    const { userId, branchId, packageId, voucherId, date, status } = req.body;
+    const { userId, branchId, packageId, voucherId, date, status, customerPhone } = req.body;
 
     // Validate input
     if (!userId || !branchId || !packageId || !date || !status) {
@@ -153,6 +158,10 @@ async function updateBooking(req, res) {
     }
 
     if (!["pending","confirmed","cancelled","completed"].includes(status)) return res.status(400).json({status:"error",message:"Invalid booking status"});
+    const normalizedCustomerPhone = customerPhone === undefined ? undefined : String(customerPhone || "").trim();
+    if (normalizedCustomerPhone && !/^[\d+().\s-]{5,32}$/.test(normalizedCustomerPhone)) {
+      return res.status(400).json({ status: "error", message: "Please provide a valid phone number" });
+    }
     // Find the booking to update
     const booking = await Booking.findByPk(id);
     if (!booking) {
@@ -190,6 +199,7 @@ async function updateBooking(req, res) {
     booking.date = date;
     booking.status = status;
     booking.totalPrice = totalPrice;
+    if (normalizedCustomerPhone !== undefined) booking.customerPhone = normalizedCustomerPhone || null;
 
     await booking.save();
     const responseData = {
@@ -197,6 +207,8 @@ async function updateBooking(req, res) {
       date: booking.date,
       totalPrice: totalPrice, // Assuming totalPrice is a number
       status: booking.status,
+      customerName: booking.customerName || user.displayName,
+      customerPhone: booking.customerPhone || null,
       user: {
         id: user.id,
         displayName: user.displayName,
