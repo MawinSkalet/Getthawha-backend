@@ -1,3 +1,4 @@
+import { resolveBookingData, BookingValidationError } from "./booking.validation";
 import {
   User,
   Booking,
@@ -10,12 +11,39 @@ import {
   sendUserNotification,
   sendEmailNotification,
 } from "../utils/sendNotifications";
+import { sendBookingCreatedNotifications } from "./bookingNotification.services";
+
+const BOOKING_SOURCES = new Set(["website", "facebook", "line", "admin"]);
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+function configuredOwnerEmails() {
+  return (process.env.OWNER_NOTIFICATION_EMAILS || "")
+    .split(",")
+    .map((email) => email.trim())
+    .filter(Boolean);
+}
+
+async function ownerNotificationEmails() {
+  const configured = configuredOwnerEmails();
+  if (configured.length > 0) return configured;
+
+  try {
+    const admins = await UserStaff.findAll({ attributes: ["email"] });
+    return admins.map((admin) => admin.email).filter(Boolean);
+  } catch (error) {
+    console.error("Could not load owner notification addresses:", error);
+    return [];
+  }
+}
 
 async function getAllBooking(req, res) {
   try {
     const { page = 1 } = req.query;
     const bookings = await Booking.findAll({
-      attributes: ["id", "date", "totalPrice", "status"],
+      attributes: [
+        "id", "date", "totalPrice", "status", "customerEmail",
+        "customerName", "numberOfGuests", "source",
+      ],
       include: [
         {
           model: User,
@@ -33,9 +61,11 @@ async function getAllBooking(req, res) {
       ],
       limit: 10,
       offset: (page - 1) * 10,
+      order: [["createdAt", "DESC"]],
     });
     return res.status(200).json(bookings);
   } catch (error) {
+    if (error instanceof BookingValidationError) return res.status(error.status).json({status:"error",message:error.message});
     console.error("Error fetching bookings:", error);
     return res.status(500).json({
       status: "error",
@@ -46,33 +76,40 @@ async function getAllBooking(req, res) {
 
 async function createBooking(req, res) {
   try {
-    const { branchId, packageId, voucherId, date } = req.body;
-    if (!branchId || !packageId || !date) {
+    const {
+      branchId,
+      packageId,
+      voucherId,
+      date,
+      customerEmail,
+      customerName,
+      numberOfGuests = 1,
+      source = "website",
+    } = req.body;
+    const normalizedCustomerEmail = String(customerEmail || "").trim().toLowerCase();
+    const normalizedSource = String(source || "website").trim().toLowerCase();
+    const parsedGuests = Number(numberOfGuests);
+    const resolvedCustomerName = String(customerName || req.user.displayName || "Customer").trim();
+
+    if (!branchId || !packageId || !date || !normalizedCustomerEmail) {
       return res.status(400).json({
         status: "error",
-        message: "Invalid booking data provided",
+        message: "Branch, package, date, and customer email are required",
       });
     }
-    const packageInfo = await Package.findByPk(packageId, {
-      attributes: ["price", "title"],
-    });
-    if (!packageInfo) {
-      return res.status(404).json({
-        status: "error",
-        message: "Package not found",
-      });
+    if (!EMAIL_PATTERN.test(normalizedCustomerEmail)) {
+      return res.status(400).json({ status: "error", message: "Please provide a valid customer email address" });
     }
-    let totalPrice = packageInfo.price;
-    let discount = 0;
-    let voucher = null;
-    if (voucherId) {
-      voucher = await Voucher.findByPk(voucherId, {
-        attributes: ["discount"],
-      });
-      if (voucher) {
-        totalPrice -= voucher.discount; // Assuming discount is a percentage
-      }
+    if (!BOOKING_SOURCES.has(normalizedSource)) {
+      return res.status(400).json({ status: "error", message: "Invalid booking source" });
     }
+    if (!Number.isInteger(parsedGuests) || parsedGuests < 1 || parsedGuests > 20) {
+      return res.status(400).json({ status: "error", message: "Number of guests must be between 1 and 20" });
+    }
+    if (!resolvedCustomerName || resolvedCustomerName.length > 120) {
+      return res.status(400).json({ status: "error", message: "Customer name must be 1 to 120 characters" });
+    }
+    const { packageInfo, branchInfo, totalPrice } = await resolveBookingData({ branchId, packageId, voucherId, date });
     const newBooking = await Booking.create({
       userId: req.user.id,
       branchId,
@@ -80,67 +117,45 @@ async function createBooking(req, res) {
       voucherId,
       date,
       totalPrice,
+      customerEmail: normalizedCustomerEmail,
+      customerName: resolvedCustomerName,
+      numberOfGuests: parsedGuests,
+      source: normalizedSource,
     });
 
-    //get branch name
-    const branch = await Branch.findByPk(branchId, {
-      attributes: ["name"],
-    });
-
-    //get package title
-    const branchName = branch ? branch.name : "N/A";
+    const branchName = branchInfo?.name || "N/A";
     const packageTitle = packageInfo ? packageInfo.title : "N/A";
-    const displayName = req.user.displayName || "N/A";
+    const displayName = resolvedCustomerName;
     const bookingCreatedMessage = [
-      `Booking Created for ${req.user.displayName || "N/A"}`,
+      `Booking Created for ${displayName} (${parsedGuests} person${parsedGuests > 1 ? "s" : ""})`,
       `Date: ${newBooking.date}`,
       `Package: ${packageTitle}`,
       `Branch: ${branchName}`,
       `Total Price: $${newBooking.totalPrice}`,
       "",
-      `จองสำเร็จสำหรับ ${req.user.displayName || "N/A"}`,
+      `จองสำเร็จสำหรับ ${displayName} (${parsedGuests} ท่าน)`,
       `วันที่: ${newBooking.date}`,
       `แพ็กเกจ: ${packageTitle}`,
       `สาขา: ${branchName}`,
       `ราคารวมทั้งหมด: $${newBooking.totalPrice}`,
     ].join("\n");
 
-    await sendUserNotification(req.user.id, bookingCreatedMessage);
-
-    // Send email notification to all admin emails
-    const admins = await UserStaff.findAll({
-      attributes: ["email"],
-    });
-    const adminEmails = admins.map((admin) => admin.email);
-
-    console.log(adminEmails);
-
-    const bookingCreatedEmailBody = [
-      "Booking Created",
-      `User: ${displayName}`,
-      `Booking ID: ${newBooking.id}`,
-      `Date: ${newBooking.date}`,
-      `Package: ${packageTitle}`,
-      `Branch: ${branchName}`,
-      `Total Price: $${newBooking.totalPrice}`,
-      `Status: ${newBooking.status}`,
-      "",
-      "สร้างการจองใหม่",
-      `ผู้ใช้: ${displayName}`,
-      `รหัสการจอง: ${newBooking.id}`,
-      `วันที่: ${newBooking.date}`,
-      `แพ็กเกจ: ${packageTitle}`,
-      `สาขา: ${branchName}`,
-      `ราคารวมทั้งหมด: $${newBooking.totalPrice}`,
-      `สถานะ: ${newBooking.status}`,
-    ].join("\n");
-
-    //async function sendEmailNotification(subject, text, emails)
-    await sendEmailNotification(
-      "New Booking Created",
-      bookingCreatedEmailBody,
-      adminEmails
-    );
+    const notifications = [
+      sendUserNotification(req.user.id, bookingCreatedMessage),
+      ownerNotificationEmails().then((ownerEmails) => sendBookingCreatedNotifications({
+        booking: newBooking,
+        customerName: displayName,
+        branchName,
+        packageTitle,
+        ownerEmails,
+      })),
+    ];
+    const results = await Promise.allSettled(notifications);
+    for (const result of results) {
+      if (result.status === "rejected") {
+        console.error("Booking notification failed:", result.reason);
+      }
+    }
 
     return res.status(201).json({
       status: "success",
@@ -151,12 +166,17 @@ async function createBooking(req, res) {
         branchId: newBooking.branchId,
         packageId: newBooking.packageId,
         voucherId: newBooking.voucherId,
+        customerEmail: newBooking.customerEmail,
+        customerName: newBooking.customerName,
+        numberOfGuests: newBooking.numberOfGuests,
+        source: newBooking.source,
         date: newBooking.date,
         totalPrice: newBooking.totalPrice,
         status: newBooking.status,
       },
     });
   } catch (error) {
+    if (error instanceof BookingValidationError) return res.status(error.status).json({status:"error",message:error.message});
     console.error("Error creating booking:", error);
     return res.status(500).json({
       status: "error",
@@ -183,31 +203,8 @@ async function updateBooking(req, res) {
       });
     }
 
-    //user can only chang status to 'cancelled' if the current status is 'pending' or 'confirmed'
-    if (status === "cancelled") {
-      if (booking.status === "completed") {
-        return res.status(400).json({
-          status: "error",
-          message: "You cannot cancel a completed booking",
-        });
-      }
-      if (booking.status === "cancelled") {
-        return res.status(400).json({
-          status: "error",
-          message: "Booking is already cancelled",
-        });
-      }
-    }
-
-    //user cant change status to confirmed or completed
-    if (status === "confirmed" || status === "completed") {
-      return res.status(400).json({
-        status: "error",
-        message:
-          "You are not allowed to change status to confirmed or completed",
-      });
-    }
-
+    if (!["pending","confirmed"].includes(booking.status)) return res.status(400).json({status:"error",message:"This booking can no longer be changed"});
+    if (status!==booking.status && status!=="cancelled") return res.status(400).json({status:"error",message:"Invalid customer booking status change"});
     //check if user is the owner of the booking
     if (booking.userId !== req.user.id) {
       return res.status(403).json({
@@ -215,27 +212,9 @@ async function updateBooking(req, res) {
         message: "You are not authorized to update this booking",
       });
     }
-    const packageInfo = await Package.findByPk(packageId, {
-      attributes: ["price", "title"],
-    });
-    if (!packageInfo) {
-      return res.status(404).json({
-        status: "error",
-        message: "Package not found",
-      });
-    }
-    let totalPrice = packageInfo.price;
-    let discount = 0;
-    let voucher = null;
-    if (voucherId) {
-      voucher = await Voucher.findByPk(voucherId, {
-        attributes: ["discount"],
-      });
-      if (voucher) {
-        totalPrice -= voucher.discount; // Assuming discount is a percentage
-      }
-    }
+    const {packageInfo,totalPrice} = await resolveBookingData({branchId,packageId,voucherId,date},booking);
     await booking.update({
+      status,
       branchId,
       packageId,
       voucherId,
@@ -243,6 +222,7 @@ async function updateBooking(req, res) {
       totalPrice,
     });
 
+    try {
     // Send user notification with UserId updated and showing status
     const updatedBranch = await Branch.findByPk(booking.branchId, {
       attributes: ["name"],
@@ -290,15 +270,14 @@ async function updateBooking(req, res) {
     ].join("\n");
 
     // Send email notification to all admin emails
-    const admins = await UserStaff.findAll({
-      attributes: ["email"],
-    });
-    const adminEmails = admins.map((admin) => admin.email);
+    const adminEmails = await ownerNotificationEmails();
     await sendEmailNotification(
       "Booking Updated",
       bookingUpdatedEmailBody,
       adminEmails
     );
+
+    } catch { console.error("Booking saved, but a notification failed"); }
 
     return res.status(200).json({
       status: "success",
@@ -315,6 +294,7 @@ async function updateBooking(req, res) {
       },
     });
   } catch (error) {
+    if (error instanceof BookingValidationError) return res.status(error.status).json({status:"error",message:error.message});
     console.error("Error updating booking:", error);
     return res.status(500).json({
       status: "error",
@@ -342,9 +322,11 @@ async function deleteBooking(req, res) {
     }
     // await booking.destroy();
 
+    if (!["pending","confirmed"].includes(booking.status)) return res.status(400).json({status:"error",message:"This booking can no longer be cancelled"});
     //soft delete
     await booking.update({ status: "cancelled" });
 
+    try {
     // Send user notification with UserId
     const [branch, packageInfo] = await Promise.all([
       Branch.findByPk(booking.branchId, { attributes: ["name"] }),
@@ -393,21 +375,21 @@ async function deleteBooking(req, res) {
     ].join("\n");
 
     // Send email notification to all admin emails
-    const admins = await UserStaff.findAll({
-      attributes: ["email"],
-    });
-    const adminEmails = admins.map((admin) => admin.email);
+    const adminEmails = await ownerNotificationEmails();
     await sendEmailNotification(
       "Booking Cancelled",
       bookingCancelledEmailBody,
       adminEmails
     );
 
+    } catch { console.error("Booking saved, but a notification failed"); }
+
     return res.status(200).json({
       status: "success",
       message: "Booking deleted successfully",
     });
   } catch (error) {
+    if (error instanceof BookingValidationError) return res.status(error.status).json({status:"error",message:error.message});
     console.error("Error deleting booking:", error);
     return res.status(500).json({
       status: "error",

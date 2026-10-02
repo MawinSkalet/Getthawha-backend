@@ -1,3 +1,4 @@
+import {resolveBookingData, BookingValidationError} from "./booking.validation";
 import {
   User,
   Booking,
@@ -37,6 +38,7 @@ async function getAllBooking(req, res) {
     });
     return res.status(200).json(bookings);
   } catch (error) {
+    if (error instanceof BookingValidationError) return res.status(error.status).json({status:"error",message:error.message});
     console.error("Error fetching bookings:", error);
     return res.status(500).json({
       status: "error",
@@ -55,25 +57,7 @@ async function createBooking(req, res) {
         message: "Invalid booking data provided",
       });
     }
-    const packageInfo = await Package.findByPk(packageId, {
-      attributes: ["id", "price", "title"],
-    });
-    if (!packageInfo) {
-      return res.status(404).json({
-        status: "error",
-        message: "Package not found",
-      });
-    }
-    // Calculate total price based on package price and voucher discount
-    let totalPrice = packageInfo.price;
-    if (voucherId) {
-      const voucher = await Voucher.findByPk(voucherId, {
-        attributes: ["discount"],
-      });
-      if (voucher) {
-        totalPrice -= voucher.discount; // Assuming discount is a percentage
-      }
-    }
+    const {packageInfo,totalPrice} = await resolveBookingData({branchId,packageId,voucherId,date});
     // Create a new Booking
     const newBooking = await Booking.create({
       userId,
@@ -84,6 +68,7 @@ async function createBooking(req, res) {
       totalPrice, // Assuming totalPrice is calculated later
     });
 
+    try {
     // Send email notification to all admin emails
     const admins = await UserStaff.findAll({
       attributes: ["email"],
@@ -141,8 +126,11 @@ async function createBooking(req, res) {
     // Send user notification with UserId
     await sendUserNotification(userId, bookingCreatedMessage);
 
+    } catch { console.error("Booking saved, but a notification failed"); }
+
     return res.status(201).json(newBooking);
   } catch (error) {
+    if (error instanceof BookingValidationError) return res.status(error.status).json({status:"error",message:error.message});
     console.error("Error creating booking:", error);
     return res.status(500).json({
       status: "error",
@@ -164,6 +152,7 @@ async function updateBooking(req, res) {
       });
     }
 
+    if (!["pending","confirmed","cancelled","completed"].includes(status)) return res.status(400).json({status:"error",message:"Invalid booking status"});
     // Find the booking to update
     const booking = await Booking.findByPk(id);
     if (!booking) {
@@ -174,27 +163,7 @@ async function updateBooking(req, res) {
     }
 
     // totalPrice calculation
-    const packageInfo = await Package.findByPk(packageId, {
-      attributes: ["id", "price", "title"],
-    });
-    if (!packageInfo) {
-      return res.status(404).json({
-        status: "error",
-        message: "Package not found",
-      });
-    }
-    let totalPrice = packageInfo.price;
-    let discount = 0;
-    let voucher = null;
-    if (voucherId) {
-      voucher = await Voucher.findByPk(voucherId, {
-        attributes: ["discount"],
-      });
-      if (voucher) {
-        discount = voucher.discount;
-        totalPrice -= voucher.discount; // Assuming discount is a percentage
-      }
-    }
+    const {packageInfo,totalPrice,voucher,discount} = await resolveBookingData({branchId,packageId,voucherId,date},booking);
     const user = await User.findByPk(userId, {
       attributes: ["id", "displayName", "pictureUrl"],
     });
@@ -220,6 +189,7 @@ async function updateBooking(req, res) {
     booking.voucherId = voucherId;
     booking.date = date;
     booking.status = status;
+    booking.totalPrice = totalPrice;
 
     await booking.save();
     const responseData = {
@@ -250,6 +220,7 @@ async function updateBooking(req, res) {
         : null,
     };
 
+    try {
     const bookingUpdatedMessage = [
       `Booking Updated for ${user.displayName || "N/A"}`,
       `Booking ID: ${booking.id}`,
@@ -271,8 +242,11 @@ async function updateBooking(req, res) {
     // Send user notification with UserId updated and showing status
     await sendUserNotification(userId, bookingUpdatedMessage);
 
+    } catch { console.error("Booking saved, but a notification failed"); }
+
     return res.status(200).json(responseData);
   } catch (error) {
+    if (error instanceof BookingValidationError) return res.status(error.status).json({status:"error",message:error.message});
     console.error("Error updating booking:", error);
     return res.status(500).json({
       status: "error",
@@ -298,6 +272,7 @@ async function deleteBooking(req, res) {
     //soft delete
     await booking.update({ status: "cancelled" });
 
+    try {
     const [user, branch, packageInfo] = await Promise.all([
       User.findByPk(booking.userId, { attributes: ["displayName"] }),
       Branch.findByPk(booking.branchId, { attributes: ["name"] }),
@@ -329,8 +304,10 @@ async function deleteBooking(req, res) {
     // Send user notification with UserId
     await sendUserNotification(booking.userId, bookingCancelledMessage);
 
+    } catch { console.error("Booking cancelled, but notification failed"); }
     return res.status(204).send(); // No content
   } catch (error) {
+    if (error instanceof BookingValidationError) return res.status(error.status).json({status:"error",message:error.message});
     console.error("Error deleting booking:", error);
     return res.status(500).json({
       status: "error",

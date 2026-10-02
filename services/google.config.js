@@ -16,7 +16,7 @@ export function googleConfigErrors(env = process.env) {
     if ([callback,client].some(url => !url || url.protocol !== "https:" || ["localhost","127.0.0.1","[::1]"].includes(url.hostname))) errors.push("Production requires HTTPS and public hostnames");
     if ((env.JWT_SECRET || "").length < 32) errors.push("Production JWT_SECRET must contain at least 32 characters");
   }
-  if (callback && client && callback.hostname !== client.hostname) {
+  if (callback && client && (callback.hostname !== client.hostname || env.COOKIE_DOMAIN)) {
     const domain = (env.COOKIE_DOMAIN || "").replace(/^\./, "");
     const matches = host => host === domain || host.endsWith("." + domain);
     if (!domain.includes(".") || !matches(callback.hostname) || !matches(client.hostname)) errors.push("COOKIE_DOMAIN must cover both frontend and API hosts");

@@ -13,3 +13,10 @@ export function loginFailure(res,reason,next) {
   url.searchParams.set("error",reason);url.searchParams.set("next",safeReturnPath(next));
   return res.redirect(url.toString());
 }
+
+// OAuth transactions belong only to the API host; login sessions may be shared.
+export function oauthCookieOptions() {
+  const options = authCookieOptions();
+  delete options.domain;
+  return options;
+}

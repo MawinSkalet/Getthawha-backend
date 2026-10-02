@@ -2,15 +2,18 @@ import axios from "axios";
 import { v4 as uuidv4 } from "uuid";
 import nodemailer from "nodemailer";
 
+const smtpPort = Number(process.env.SMTP_PORT || 587);
+const smtpSecure = process.env.SMTP_SECURE === "true" || smtpPort === 465;
+
 const transporter = nodemailer.createTransport({
-  host: "smtp.mail.me.com",
-  port: 587, // STARTTLS
-  secure: false, // true only for 465
+  host: process.env.SMTP_HOST || "smtp.mail.me.com",
+  port: smtpPort,
+  secure: smtpSecure,
   auth: {
     user: process.env.EMAIL, // usually your @icloud.com Apple ID
     pass: process.env.EMAIL_PASSWORD, // app-specific password
   },
-  requireTLS: true,
+  requireTLS: !smtpSecure,
   // connection hygiene
   pool: true,
   maxConnections: 3,
@@ -22,6 +25,8 @@ const transporter = nodemailer.createTransport({
 });
 
 async function sendUserNotification(userId, message) {
+  // Google users do not have a LINE recipient ID.
+  if (!/^U[0-9a-f]{32}$/i.test(userId || "")) return;
   //if dont have message channel access token, return
   if (!process.env.MESSAGE_CHANNEL_ACCESS_TOKEN) {
     console.log("No MESSAGE_CHANNEL_ACCESS_TOKEN found");
@@ -40,6 +45,7 @@ async function sendUserNotification(userId, message) {
       ],
     },
     {
+      timeout: 10000,
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${process.env.MESSAGE_CHANNEL_ACCESS_TOKEN}`,
@@ -50,15 +56,26 @@ async function sendUserNotification(userId, message) {
 }
 
 async function sendEmailNotification(subject, text, emails) {
-  // emails is an array of email addresses
-  if (!process.env.EMAIL || !process.env.EMAIL_PASSWORD) {
-    console.log("No EMAIL or EMAIL_PASSWORD found");
-    return;
+  const recipients = [...new Set((emails || [])
+    .map((email) => String(email || "").trim().toLowerCase())
+    .filter(Boolean))];
+
+  if (recipients.length === 0) {
+    console.warn("No email recipients configured for notification");
+    return { sent: [], failed: [], skipped: [] };
   }
 
-  //loop through emails and send email to each
-  for (const email of emails) {
-    const sender = process.env.CUSTOM_EMAIL;
+  if (!process.env.EMAIL || !process.env.EMAIL_PASSWORD) {
+    console.log("No EMAIL or EMAIL_PASSWORD found");
+    return { sent: [], failed: [], skipped: recipients };
+  }
+
+  const sent = [];
+  const failed = [];
+  const sender = process.env.CUSTOM_EMAIL || process.env.EMAIL;
+
+  // Send separate messages so recipients cannot see one another's addresses.
+  for (const email of recipients) {
 
     const mailOptions = {
       from: sender,
@@ -76,10 +93,14 @@ async function sendEmailNotification(subject, text, emails) {
     try {
       await transporter.sendMail(mailOptions);
       console.log(`Email sent to ${email}`);
+      sent.push(email);
     } catch (error) {
       console.error(`Error sending email to ${email}:`, error);
+      failed.push(email);
     }
   }
+
+  return { sent, failed, skipped: [] };
 }
 
 export { sendUserNotification, sendEmailNotification };

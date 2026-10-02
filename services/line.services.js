@@ -75,21 +75,17 @@ async function authorization(req, res) {
           },
         });
     } else {
-      if (!code) {
-        return res.status(400).json({ error: "Code is required" });
+      const next = safeReturnPath(req.cookies.loginReturn);
+      if (typeof state !== "string" || !state || state !== req.cookies.lineState) {
+        res.clearCookie("lineState", authCookieOptions());
+        res.clearCookie("loginReturn", authCookieOptions());
+        return loginFailure(res, "failed", next);
       }
-
-      if (!state || state !== req.cookies.lineState) {
-        return res.status(403).send("Invalid or missing state.");
+      res.clearCookie("lineState", authCookieOptions());
+      if (req.query.error || typeof code !== "string" || !code) {
+        res.clearCookie("loginReturn", authCookieOptions());
+        return loginFailure(res, "failed", next);
       }
-
-      //clear the state cookie
-      res.clearCookie("lineState", {
-        httpOnly: true,
-        sameSite: process.env.NODE_ENV === "staging" ? "none" : "lax",
-        secure: process.env.NODE_ENV === "production",
-        maxAge: 3600000, // 1 hour
-      });
 
       const token = await axios.post(
         "https://api.line.me/oauth2/v2.1/token",
@@ -144,6 +140,11 @@ async function authorization(req, res) {
         .redirect(frontendUrl(safeReturnPath(req.cookies.loginReturn)));
     }
   } catch (err) {
+    if (req.method === "GET") {
+      res.clearCookie("lineState", authCookieOptions());
+      res.clearCookie("loginReturn", authCookieOptions());
+      return loginFailure(res, "failed", req.cookies.loginReturn);
+    }
     res
       .status(500)
       .json({ error: "Internal Server Error", detail: err.message });

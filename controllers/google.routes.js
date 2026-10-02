@@ -3,7 +3,7 @@ import axios from "axios";
 import jwt from "jsonwebtoken";
 import {randomBytes,createHash,createPublicKey} from "crypto";
 import {User} from "../models/index";
-import {safeReturnPath,frontendUrl,authCookieOptions,loginFailure} from "../services/oauth.helpers";
+import {safeReturnPath,frontendUrl,authCookieOptions,oauthCookieOptions,loginFailure} from "../services/oauth.helpers";
 import {googleConfigErrors} from "../services/google.config";
 const router=express.Router();
 const configured=()=>googleConfigErrors().length === 0;
@@ -12,8 +12,7 @@ router.get("/authentication",(req,res)=>{
   if(!configured()) return loginFailure(res,"not_configured",next);
   const state=randomBytes(32).toString("hex"),nonce=randomBytes(32).toString("hex"),verifier=randomBytes(32).toString("base64url");
   const session=jwt.sign({state,nonce,verifier,next},process.env.JWT_SECRET,{expiresIn:"10m",audience:"google-oauth",issuer:"getthawha"});
-  const {domain: _domain, ...stateCookie} = authCookieOptions();
-  res.cookie("googleOAuth",session,{...stateCookie,maxAge:600000});
+  res.cookie("googleOAuth",session,{...oauthCookieOptions(),maxAge:600000});
   const url=new URL("https://accounts.google.com/o/oauth2/v2/auth");
   url.search=new URLSearchParams({client_id:process.env.GOOGLE_CLIENT_ID,redirect_uri:process.env.GOOGLE_REDIRECT_URI,response_type:"code",scope:"openid profile email",state,nonce,code_challenge:createHash("sha256").update(verifier).digest("base64url"),code_challenge_method:"S256"}).toString();
   return res.redirect(url.toString());
@@ -23,7 +22,7 @@ router.get("/authorization",async(req,res)=>{
   try {
     const session=jwt.verify(req.cookies.googleOAuth || "",process.env.JWT_SECRET,{algorithms:["HS256"],audience:"google-oauth",issuer:"getthawha"});
     next=safeReturnPath(session.next);
-    res.clearCookie("googleOAuth",{httpOnly:true,sameSite:"lax",secure:process.env.NODE_ENV === "production",path:"/"});
+    res.clearCookie("googleOAuth",oauthCookieOptions());
     if(req.query.state !== session.state || typeof req.query.code !== "string" || req.query.error) return loginFailure(res,"failed",next);
     const token=await axios.post("https://oauth2.googleapis.com/token",new URLSearchParams({client_id:process.env.GOOGLE_CLIENT_ID,client_secret:process.env.GOOGLE_CLIENT_SECRET,redirect_uri:process.env.GOOGLE_REDIRECT_URI,code:req.query.code,code_verifier:session.verifier,grant_type:"authorization_code"}).toString(),{headers:{"Content-Type":"application/x-www-form-urlencoded"},timeout:10000});
     const decoded=jwt.decode(token.data.id_token,{complete:true});
@@ -43,7 +42,7 @@ router.get("/authorization",async(req,res)=>{
     const info=jwt.sign({id:user.id},process.env.JWT_SECRET,{expiresIn:"1h"});
     return res.cookie("info",info,{...authCookieOptions(),maxAge:3600000}).redirect(frontendUrl(next));
   } catch {
-    res.clearCookie("googleOAuth",authCookieOptions());
+    res.clearCookie("googleOAuth",oauthCookieOptions());
     return loginFailure(res,"failed",next);
   }
 });

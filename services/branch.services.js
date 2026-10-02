@@ -13,6 +13,7 @@ async function getAllBranch(req, res) {
         "googleMapEmbedUrl",
         "pictureUrl",
         "description",
+        "isActive",
       ],
       where: { deletedAt: null },
     });

@@ -23,6 +23,25 @@ const Booking = sequelize.define("bookings", {
     type: DataTypes.UUID,
     allowNull: true,
   },
+  customerEmail: {
+    type: DataTypes.STRING,
+    allowNull: true,
+    validate: { isEmail: true },
+  },
+  customerName: {
+    type: DataTypes.STRING,
+    allowNull: true,
+  },
+  numberOfGuests: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    defaultValue: 1,
+  },
+  source: {
+    type: DataTypes.STRING,
+    allowNull: false,
+    defaultValue: "website",
+  },
   date: {
     type: DataTypes.DATE,
     allowNull: false,

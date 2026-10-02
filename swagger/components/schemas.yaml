@@ -22,6 +22,28 @@ BookingOutput:
         - cancelled
         - completed
       example: pending
+    customerEmail:
+      type: string
+      format: email
+      nullable: true
+      example: guest@example.com
+    customerName:
+      type: string
+      nullable: true
+      example: Guest Name
+    numberOfGuests:
+      type: integer
+      minimum: 1
+      maximum: 20
+      example: 1
+    source:
+      type: string
+      enum:
+        - website
+        - facebook
+        - line
+        - admin
+      example: website
     user:
       type: object
       properties:
@@ -104,10 +126,34 @@ BookingInput:
       type: string
       format: date-time
       example: "2023-10-01T12:00:00Z"
+    customerEmail:
+      type: string
+      format: email
+      example: guest@example.com
+    customerName:
+      type: string
+      maxLength: 120
+      example: Guest Name
+    numberOfGuests:
+      type: integer
+      minimum: 1
+      maximum: 20
+      default: 1
+      example: 1
+    source:
+      type: string
+      enum:
+        - website
+        - facebook
+        - line
+        - admin
+      default: website
+      example: website
   required:
     - branchId
     - packageId
     - date
+    - customerEmail
 
 BookingWithUserInput:
   type: object
