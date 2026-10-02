@@ -126,4 +126,76 @@ async function getBookingByDate(req, res) {
   }
 }
 
-export { getDailyBookingStatusByMonth, getBookingByDate };
+async function getBookingsByMonth(req, res) {
+  try {
+    const year = Number(req.params.year);
+    const month = Number(req.params.month);
+    if (
+      !Number.isInteger(year) ||
+      year < 2000 ||
+      year > 2200 ||
+      !Number.isInteger(month) ||
+      month < 1 ||
+      month > 12
+    ) {
+      return res.status(400).json({
+        status: "error",
+        message: "A valid year and month are required",
+      });
+    }
+
+    const startOfMonth = moment
+      .tz([year, month - 1, 1], "Asia/Bangkok")
+      .startOf("day")
+      .toDate();
+    const startOfNextMonth = moment
+      .tz([year, month - 1, 1], "Asia/Bangkok")
+      .add(1, "month")
+      .toDate();
+    const bookings = await Booking.findAll({
+      where: {
+        date: {
+          [Op.gte]: startOfMonth,
+          [Op.lt]: startOfNextMonth,
+        },
+      },
+      include: [
+        {
+          model: User,
+          attributes: ["id", "displayName", "pictureUrl"],
+          as: "user",
+        },
+        { model: Package, attributes: ["id", "title"], as: "package" },
+        {
+          model: Voucher,
+          attributes: ["id", "code", "discount"],
+          as: "voucher",
+        },
+        { model: Branch, attributes: ["id", "name"], as: "branch" },
+      ],
+      attributes: {
+        exclude: [
+          "userId",
+          "branchId",
+          "packageId",
+          "voucherId",
+          "createdAt",
+          "updatedAt",
+        ],
+      },
+      order: [["date", "ASC"]],
+    });
+
+    return res.status(200).json({
+      status: "success",
+      data: bookings,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      status: "error",
+      message: "An error occurred while fetching bookings for the month",
+    });
+  }
+}
+
+export { getDailyBookingStatusByMonth, getBookingByDate, getBookingsByMonth };

@@ -11,6 +11,10 @@ import swaggerUi from "swagger-ui-express";
 import swaggerDocument from "./swagger.json";
 
 const app = express();
+const configuredCorsOrigins = (process.env.CORS_ALLOWED_ORIGINS || "")
+  .split(",")
+  .map((origin) => origin.trim())
+  .filter(Boolean);
 
 //import routes
 import lineRouter from "./controllers/line.routes";
@@ -37,6 +41,7 @@ app.use(cookieParser());
 app.use(
   cors({
     origin: [
+      ...configuredCorsOrigins,
       ...(process.env.FRONTEND_ORIGIN ? [new URL(process.env.FRONTEND_ORIGIN).origin] : []),
       "http://localhost:3000",
       "http://localhost:3001",

@@ -7,7 +7,7 @@ async function getDasboard(req, res) {
     const totalUsers = await User.count();
     const totalBookings = await Booking.count();
     const totalRevenue = await Booking.sum("totalPrice", {
-      where: { status: { [Op.eq]: "completed" } },
+      where: { status: { [Op.in]: ["confirmed", "completed"] } },
     });
     // Get today's bookings in business timezone using half-open interval
     const TZ = "Asia/Bangkok";
