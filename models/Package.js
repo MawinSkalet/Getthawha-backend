@@ -37,6 +37,10 @@ const Package = sequelize.define("packages", {
     allowNull: false,
     defaultValue: "service",
   },
+  category: {
+    type: DataTypes.STRING,
+    allowNull: true,
+  },
   isActive: {
     type: DataTypes.BOOLEAN,
     defaultValue: true,

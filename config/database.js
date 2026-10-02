@@ -53,6 +53,14 @@ async function sync() {
         await queryInterface.addColumn("bookings", columnName, definition);
       }
     }
+
+    const packageColumns = await queryInterface.describeTable("packages");
+    if (!packageColumns.category) {
+      await queryInterface.addColumn("packages", "category", {
+        type: Sequelize.STRING,
+        allowNull: true,
+      });
+    }
     console.log("Connection synced successfully");
   } catch (error) {
     console.error("Unable to sync to the database:", error);

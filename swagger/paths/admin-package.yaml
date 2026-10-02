@@ -86,6 +86,91 @@
                   status: error
                   message: An error occurred while creating the package
 
+/admin/package/group:
+  post:
+    tags:
+      - Admin Package
+    summary: Create a menu item with multiple duration and price variants
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/PackageGroupInput"
+    responses:
+      "201":
+        description: Menu item created successfully
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: "#/components/schemas/PackageOutput"
+      "400":
+        description: Invalid menu item data
+      "401":
+        description: Unauthorized
+      "409":
+        description: A menu item with this name already exists
+      "500":
+        description: Internal server error
+
+/admin/package/group/{id}:
+  put:
+    tags:
+      - Admin Package
+    summary: Update a menu item and synchronize its duration variants
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/PackageGroupInput"
+    responses:
+      "200":
+        description: Menu item updated successfully
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: "#/components/schemas/PackageOutput"
+      "400":
+        description: Invalid menu item data
+      "401":
+        description: Unauthorized
+      "404":
+        description: Menu item not found
+      "409":
+        description: A package with this exact name already exists
+      "500":
+        description: Internal server error
+  delete:
+    tags:
+      - Admin Package
+    summary: Remove a menu item and all of its variants from the active catalog
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+    responses:
+      "204":
+        description: Menu item removed successfully
+      "401":
+        description: Unauthorized
+      "404":
+        description: Menu item not found
+      "500":
+        description: Internal server error
+
 /admin/package/{id}:
   put:
     tags:

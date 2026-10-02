@@ -336,6 +336,12 @@ PackageInput:
         - service
         - promotion
       example: service
+    category:
+      type: string
+      example: Thai Massage
+    isActive:
+      type: boolean
+      example: true
   required:
     - title
     - description
@@ -377,6 +383,9 @@ PackageOutput:
         - service
         - promotion
       example: service
+    category:
+      type: string
+      example: Thai Massage
     isActive:
       type: boolean
       example: true
@@ -388,6 +397,60 @@ PackageOutput:
     - duration
     - type
     - pictureUrl
+    - category
+    - isActive
+
+PackageGroupInput:
+  type: object
+  properties:
+    type:
+      type: string
+      enum:
+        - service
+        - promotion
+    category:
+      type: string
+      example: Thai Massage
+    title:
+      type: string
+      example: Thai Massage
+    description:
+      type: string
+      example: Traditional Thai massage
+    pictureUrl:
+      type: string
+      format: uri
+      nullable: true
+    note:
+      type: string
+      nullable: true
+    isActive:
+      type: boolean
+      default: true
+    variants:
+      type: array
+      minItems: 1
+      items:
+        type: object
+        properties:
+          duration:
+            type: integer
+            enum:
+              - 60
+              - 90
+              - 120
+          price:
+            type: number
+            exclusiveMinimum: 0
+        required:
+          - duration
+          - price
+  required:
+    - type
+    - category
+    - title
+    - description
+    - variants
 
 UserInfoResponse:
   type: object

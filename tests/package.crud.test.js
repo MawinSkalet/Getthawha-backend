@@ -4,12 +4,23 @@ const records = new Map();
 let nextId = 1;
 
 const Package = {
+  sequelize: {
+    transaction: async () => ({
+      commit: async () => {},
+      rollback: async () => {},
+    }),
+  },
   findAll: async ({ where } = {}) =>
     [...records.values()].filter(
       (record) => where?.deletedAt !== null || record.deletedAt === null
     ),
   findByPk: async (id) => records.get(id) ?? null,
   create: async (values) => {
+    if ([...records.values()].some((record) => record.title === values.title)) {
+      const error = new Error("duplicate package title");
+      error.name = "SequelizeUniqueConstraintError";
+      throw error;
+    }
     const record = {
       id: `package-${nextId++}`,
       isActive: true,
@@ -95,6 +106,103 @@ describe("admin service and promotion catalog CRUD", () => {
     });
   });
 
+  it("creates a complete menu item with multiple duration prices in one operation", async () => {
+    const res = response();
+    await packageServices.createPackageGroup(
+      {
+        body: {
+          type: "service",
+          category: "Thai Massage",
+          title: "Thai massage",
+          description: "Traditional Thai massage",
+          pictureUrl: null,
+          note: null,
+          variants: [
+            { duration: 60, price: 300 },
+            { duration: 90, price: 450 },
+            { duration: 120, price: 600 },
+          ],
+        },
+      },
+      res
+    );
+
+    expect(res.statusCode).toBe(201);
+    expect(res.body).toHaveLength(3);
+    expect(res.body.map(({ title, duration, price }) => [title, duration, price])).toEqual([
+      ["Thai massage (60 mins)", 60, 300],
+      ["Thai massage (90 mins)", 90, 450],
+      ["Thai massage (120 mins)", 120, 600],
+    ]);
+    expect(res.body.every((variant) => variant.category === "Thai Massage")).toBe(true);
+  });
+
+  it("updates variants together, hides removed durations, and can hide the item from bookings", async () => {
+    const create = response();
+    await packageServices.createPackageGroup(
+      {
+        body: {
+          type: "service",
+          category: "Foot Massage",
+          title: "Foot massage",
+          description: "Foot treatment",
+          variants: [
+            { duration: 60, price: 300 },
+            { duration: 90, price: 450 },
+            { duration: 120, price: 600 },
+          ],
+        },
+      },
+      create
+    );
+
+    const update = response();
+    await packageServices.updatePackageGroup(
+      {
+        params: { id: create.body[0].id },
+        body: {
+          type: "service",
+          category: "Foot Massage",
+          title: "Foot massage",
+          description: "Updated foot treatment",
+          isActive: false,
+          variants: [
+            { duration: 60, price: 330 },
+            { duration: 120, price: 650 },
+          ],
+        },
+      },
+      update
+    );
+
+    expect(update.statusCode).toBe(200);
+    expect(update.body).toHaveLength(2);
+    expect(update.body.every((variant) => !variant.isActive)).toBe(true);
+    expect([...records.values()].find((record) => record.duration === 90).deletedAt).toBeInstanceOf(Date);
+    const list = response();
+    await packageServices.getAllPackage({}, list);
+    expect(list.body).toHaveLength(2);
+    expect(list.body.every((variant) => !variant.isActive)).toBe(true);
+  });
+
+  it("rejects duplicate service groups with a clear conflict response", async () => {
+    const first = response();
+    const input = {
+      type: "promotion",
+      category: "The Best Massage",
+      title: "Office syndrome massage",
+      description: "Office treatment",
+      variants: [{ duration: 90, price: 799 }],
+    };
+    await packageServices.createPackageGroup({ body: input }, first);
+    const duplicate = response();
+    await packageServices.createPackageGroup({ body: input }, duplicate);
+
+    expect(first.statusCode).toBe(201);
+    expect(duplicate.statusCode).toBe(409);
+    expect(duplicate.body.message).toContain("already exists");
+  });
+
   it("rejects invalid types, blank text, and non-positive values", async () => {
     for (const input of [
       validInput({ type: "voucher" }),
@@ -171,5 +279,35 @@ describe("admin service and promotion catalog CRUD", () => {
       updateDeleted
     );
     expect(updateDeleted.statusCode).toBe(404);
+  });
+
+  it("removes every duration in a menu group while keeping booking records", async () => {
+    const created = response();
+    await packageServices.createPackageGroup(
+      {
+        body: {
+          type: "promotion",
+          category: "The Best Massage",
+          title: "Office syndrome",
+          description: "A promotion",
+          variants: [
+            { duration: 90, price: 799 },
+            { duration: 120, price: 1000 },
+          ],
+        },
+      },
+      created
+    );
+    const deleted = response();
+    await packageServices.deletePackageGroup(
+      { params: { id: created.body[0].id } },
+      deleted
+    );
+
+    expect(deleted.statusCode).toBe(204);
+    expect([...records.values()].every((record) => record.isActive === false)).toBe(true);
+    const list = response();
+    await packageServices.getAllPackage({}, list);
+    expect(list.body).toHaveLength(0);
   });
 });
