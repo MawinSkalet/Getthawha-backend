@@ -10,12 +10,23 @@ import {
   sendUserNotification,
   sendEmailNotification,
 } from "../utils/sendNotifications";
+import { sendBookingCreatedNotifications } from "./bookingNotification.services";
+
+const BOOKING_SOURCES = new Set(["website", "facebook", "line", "admin"]);
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+function configuredOwnerEmails() {
+  return (process.env.OWNER_NOTIFICATION_EMAILS || "")
+    .split(",")
+    .map((email) => email.trim())
+    .filter(Boolean);
+}
 
 async function getAllBooking(req, res) {
   try {
     const { page = 1 } = req.query;
     const bookings = await Booking.findAll({
-      attributes: ["id", "date", "totalPrice", "status"],
+      attributes: ["id", "date", "totalPrice", "status", "customerEmail", "customerName", "numberOfGuests"],
       include: [
         {
           model: User,
@@ -46,11 +57,28 @@ async function getAllBooking(req, res) {
 
 async function createBooking(req, res) {
   try {
-    const { branchId, packageId, voucherId, date } = req.body;
-    if (!branchId || !packageId || !date) {
+    const { branchId, packageId, voucherId, date, customerEmail, customerName, numberOfGuests = 1, source = "website" } = req.body;
+    const normalizedCustomerEmail = String(customerEmail || "").trim().toLowerCase();
+    const normalizedSource = String(source || "website").trim().toLowerCase();
+    const parsedGuests = Math.max(1, parseInt(numberOfGuests, 10) || 1);
+    const resolvedCustomerName = customerName && String(customerName).trim() ? String(customerName).trim() : (req.user.displayName || "Customer");
+
+    if (!branchId || !packageId || !date || !normalizedCustomerEmail) {
       return res.status(400).json({
         status: "error",
-        message: "Invalid booking data provided",
+        message: "Branch, package, date, and customer email are required",
+      });
+    }
+    if (!EMAIL_PATTERN.test(normalizedCustomerEmail)) {
+      return res.status(400).json({
+        status: "error",
+        message: "Please provide a valid customer email address",
+      });
+    }
+    if (!BOOKING_SOURCES.has(normalizedSource)) {
+      return res.status(400).json({
+        status: "error",
+        message: "Invalid booking source",
       });
     }
     const packageInfo = await Package.findByPk(packageId, {
@@ -80,6 +108,10 @@ async function createBooking(req, res) {
       voucherId,
       date,
       totalPrice,
+      customerEmail: normalizedCustomerEmail,
+      customerName: resolvedCustomerName,
+      numberOfGuests: parsedGuests,
+      source: normalizedSource,
     });
 
     //get branch name
@@ -90,15 +122,15 @@ async function createBooking(req, res) {
     //get package title
     const branchName = branch ? branch.name : "N/A";
     const packageTitle = packageInfo ? packageInfo.title : "N/A";
-    const displayName = req.user.displayName || "N/A";
+    const displayName = resolvedCustomerName;
     const bookingCreatedMessage = [
-      `Booking Created for ${req.user.displayName || "N/A"}`,
+      `Booking Created for ${displayName} (${parsedGuests} person${parsedGuests > 1 ? "s" : ""})`,
       `Date: ${newBooking.date}`,
       `Package: ${packageTitle}`,
       `Branch: ${branchName}`,
       `Total Price: $${newBooking.totalPrice}`,
       "",
-      `จองสำเร็จสำหรับ ${req.user.displayName || "N/A"}`,
+      `จองสำเร็จสำหรับ ${displayName} (${parsedGuests} ท่าน)`,
       `วันที่: ${newBooking.date}`,
       `แพ็กเกจ: ${packageTitle}`,
       `สาขา: ${branchName}`,
@@ -107,40 +139,27 @@ async function createBooking(req, res) {
 
     await sendUserNotification(req.user.id, bookingCreatedMessage);
 
-    // Send email notification to all admin emails
+    // Owner addresses may be configured explicitly. Existing staff addresses
+    // remain a safe fallback until that environment value is set.
     const admins = await UserStaff.findAll({
       attributes: ["email"],
     });
-    const adminEmails = admins.map((admin) => admin.email);
+    const ownerEmails = configuredOwnerEmails();
+    const notificationRecipients =
+      ownerEmails.length > 0 ? ownerEmails : admins.map((admin) => admin.email);
 
-    console.log(adminEmails);
-
-    const bookingCreatedEmailBody = [
-      "Booking Created",
-      `User: ${displayName}`,
-      `Booking ID: ${newBooking.id}`,
-      `Date: ${newBooking.date}`,
-      `Package: ${packageTitle}`,
-      `Branch: ${branchName}`,
-      `Total Price: $${newBooking.totalPrice}`,
-      `Status: ${newBooking.status}`,
-      "",
-      "สร้างการจองใหม่",
-      `ผู้ใช้: ${displayName}`,
-      `รหัสการจอง: ${newBooking.id}`,
-      `วันที่: ${newBooking.date}`,
-      `แพ็กเกจ: ${packageTitle}`,
-      `สาขา: ${branchName}`,
-      `ราคารวมทั้งหมด: $${newBooking.totalPrice}`,
-      `สถานะ: ${newBooking.status}`,
-    ].join("\n");
-
-    //async function sendEmailNotification(subject, text, emails)
-    await sendEmailNotification(
-      "New Booking Created",
-      bookingCreatedEmailBody,
-      adminEmails
-    );
+    try {
+      await sendBookingCreatedNotifications({
+        booking: newBooking,
+        customerName: displayName,
+        branchName,
+        packageTitle,
+        ownerEmails: notificationRecipients,
+      });
+    } catch (notificationError) {
+      // A mail outage must not turn a successful booking into an error.
+      console.error("Booking notification failed:", notificationError);
+    }
 
     return res.status(201).json({
       status: "success",
@@ -151,6 +170,10 @@ async function createBooking(req, res) {
         branchId: newBooking.branchId,
         packageId: newBooking.packageId,
         voucherId: newBooking.voucherId,
+        customerEmail: newBooking.customerEmail,
+        customerName: newBooking.customerName,
+        numberOfGuests: newBooking.numberOfGuests,
+        source: newBooking.source,
         date: newBooking.date,
         totalPrice: newBooking.totalPrice,
         status: newBooking.status,
@@ -289,11 +312,13 @@ async function updateBooking(req, res) {
       `ราคารวมทั้งหมด: $${booking.totalPrice}`,
     ].join("\n");
 
-    // Send email notification to all admin emails
+    // Send email notification to owner / admin emails
     const admins = await UserStaff.findAll({
       attributes: ["email"],
     });
-    const adminEmails = admins.map((admin) => admin.email);
+    const ownerEmails = configuredOwnerEmails();
+    const adminEmails =
+      ownerEmails.length > 0 ? ownerEmails : admins.map((admin) => admin.email);
     await sendEmailNotification(
       "Booking Updated",
       bookingUpdatedEmailBody,
@@ -392,11 +417,13 @@ async function deleteBooking(req, res) {
       `สถานะ: ${booking.status}`,
     ].join("\n");
 
-    // Send email notification to all admin emails
+    // Send email notification to owner / admin emails
     const admins = await UserStaff.findAll({
       attributes: ["email"],
     });
-    const adminEmails = admins.map((admin) => admin.email);
+    const ownerEmails = configuredOwnerEmails();
+    const adminEmails =
+      ownerEmails.length > 0 ? ownerEmails : admins.map((admin) => admin.email);
     await sendEmailNotification(
       "Booking Cancelled",
       bookingCancelledEmailBody,

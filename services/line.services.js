@@ -195,9 +195,14 @@ async function devLogin(req, res) {
     let user = await User.findOne({ where: { id: userId } });
 
     if (!user) {
+      let displayName = req.query.displayName || "Getthawa Guest";
+      const existingName = await User.findOne({ where: { displayName } });
+      if (existingName) {
+        displayName = `${displayName} (${userId})`;
+      }
       user = await User.create({
         id: userId,
-        displayName: "Getthawa Guest",
+        displayName,
         pictureUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb",
       });
     }
@@ -206,6 +211,10 @@ async function devLogin(req, res) {
       expiresIn: "1d",
     });
 
+    const targetUrl = req.query.next
+      ? `${process.env.REDIRECT_URI_AFTER_LOGIN || "http://localhost:3000"}${req.query.next}`
+      : process.env.REDIRECT_URI_AFTER_LOGIN || "http://localhost:3000";
+
     return res
       .cookie("info", jwtToken, {
         httpOnly: true,
@@ -213,7 +222,7 @@ async function devLogin(req, res) {
         secure: process.env.NODE_ENV === "production",
         maxAge: 86400000,
       })
-      .redirect(process.env.REDIRECT_URI_AFTER_LOGIN || "http://localhost:3000");
+      .redirect(targetUrl);
   } catch (err) {
     res.status(500).json({ error: "Dev login error", detail: err.message });
   }

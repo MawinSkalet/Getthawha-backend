@@ -28,6 +28,42 @@ async function connect() {
 async function sync() {
   try {
     await sequelize.sync();
+    // `sync()` creates tables but does not add columns to an existing table.
+    // Add the notification fields safely for installations created before
+    // customer-email notifications existed.
+    const queryInterface = sequelize.getQueryInterface();
+    const bookingColumns = await queryInterface.describeTable("bookings");
+
+    if (!bookingColumns.customerEmail) {
+      await queryInterface.addColumn("bookings", "customerEmail", {
+        type: Sequelize.STRING,
+        allowNull: true,
+      });
+    }
+
+    if (!bookingColumns.source) {
+      await queryInterface.addColumn("bookings", "source", {
+        type: Sequelize.STRING,
+        allowNull: false,
+        defaultValue: "website",
+      });
+    }
+
+    if (!bookingColumns.customerName) {
+      await queryInterface.addColumn("bookings", "customerName", {
+        type: Sequelize.STRING,
+        allowNull: true,
+      });
+    }
+
+    if (!bookingColumns.numberOfGuests) {
+      await queryInterface.addColumn("bookings", "numberOfGuests", {
+        type: Sequelize.INTEGER,
+        allowNull: false,
+        defaultValue: 1,
+      });
+    }
+
     console.log("Connection synced successfully");
   } catch (error) {
     console.error("Unable to sync to the database:", error);
