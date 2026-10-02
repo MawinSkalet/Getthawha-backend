@@ -1896,22 +1896,7 @@
         ],
         "responses": {
           "204": {
-            "description": "Package deleted successfully",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiResponse"
-                },
-                "examples": {
-                  "success": {
-                    "value": {
-                      "status": "success",
-                      "message": "Package deleted successfully"
-                    }
-                  }
-                }
-              }
-            }
+            "description": "Package deleted successfully"
           },
           "401": {
             "description": "Unauthorized",
@@ -5046,11 +5031,21 @@
           "pictureUrl": {
             "type": "string",
             "format": "uri",
+            "nullable": true,
             "example": "https://example.com/package.jpg"
           },
           "note": {
             "type": "string",
+            "nullable": true,
             "example": "Optional note for the package"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "service",
+              "promotion"
+            ],
+            "example": "service"
           }
         },
         "required": [
@@ -5058,7 +5053,7 @@
           "description",
           "price",
           "duration",
-          "pictureUrl"
+          "type"
         ]
       },
       "PackageOutput": {
@@ -5088,15 +5083,21 @@
           "pictureUrl": {
             "type": "string",
             "format": "uri",
+            "nullable": true,
             "example": "https://example.com/package.jpg"
           },
           "note": {
             "type": "string",
+            "nullable": true,
             "example": "Optional note for the package"
           },
           "type": {
             "type": "string",
-            "example": "thai"
+            "enum": [
+              "service",
+              "promotion"
+            ],
+            "example": "service"
           },
           "isActive": {
             "type": "boolean",
@@ -5109,6 +5110,7 @@
           "description",
           "price",
           "duration",
+          "type",
           "pictureUrl"
         ]
       },

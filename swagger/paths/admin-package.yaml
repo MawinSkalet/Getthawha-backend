@@ -167,15 +167,6 @@
     responses:
       "204":
         description: Package deleted successfully
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/ApiResponse"
-            examples:
-              success:
-                value:
-                  status: success
-                  message: Package deleted successfully
       "401":
         description: Unauthorized
         content:

@@ -1,8 +1,66 @@
 import { Package } from "../models/index";
 
+function normalizePackageInput(body = {}) {
+  const title = typeof body.title === "string" ? body.title.trim() : "";
+  const description =
+    typeof body.description === "string" ? body.description.trim() : "";
+  const price = Number(body.price);
+  const duration = Number(body.duration);
+  const type = body.type;
+
+  if (
+    !title ||
+    !description ||
+    !Number.isFinite(price) ||
+    price <= 0 ||
+    !Number.isInteger(duration) ||
+    duration <= 0 ||
+    !["service", "promotion"].includes(type) ||
+    (body.pictureUrl != null && typeof body.pictureUrl !== "string") ||
+    (body.note != null && typeof body.note !== "string")
+  ) {
+    return null;
+  }
+
+  return {
+    title,
+    description,
+    price,
+    duration,
+    pictureUrl:
+      typeof body.pictureUrl === "string" && body.pictureUrl.trim()
+        ? body.pictureUrl.trim()
+        : null,
+    note:
+      typeof body.note === "string" && body.note.trim()
+        ? body.note.trim()
+        : null,
+    type,
+  };
+}
+
+function invalidPackageResponse(res) {
+  return res.status(400).json({
+    status: "error",
+    message: "Invalid package data provided",
+  });
+}
+
+function packageResponse(packageRecord) {
+  return {
+    id: packageRecord.id,
+    title: packageRecord.title,
+    description: packageRecord.description,
+    price: packageRecord.price,
+    duration: packageRecord.duration,
+    pictureUrl: packageRecord.pictureUrl,
+    note: packageRecord.note,
+    type: packageRecord.type,
+  };
+}
+
 async function getAllPackage(req, res) {
   try {
-    // Fetch all package from the database
     const packages = await Package.findAll({
       attributes: [
         "id",
@@ -28,39 +86,14 @@ async function getAllPackage(req, res) {
 }
 
 async function createPackage(req, res) {
-  try {
-    const { title, description, price, duration, pictureUrl, note, type } =
-      req.body;
-    // Validate input
-    if (!title || !description || !price || !duration || !pictureUrl || !type) {
-      return res.status(400).json({
-        status: "error",
-        message: "Invalid package data provided",
-      });
-    }
+  const packageInput = normalizePackageInput(req.body);
+  if (!packageInput) return invalidPackageResponse(res);
 
-    // Create a new Package
-    const newPackage = await Package.create({
-      title,
-      description,
-      price,
-      duration,
-      pictureUrl,
-      note,
-      type,
-    });
-    const response = {
-      id: newPackage.id,
-      title: newPackage.title,
-      description: newPackage.description,
-      price: newPackage.price,
-      duration: newPackage.duration,
-      pictureUrl: newPackage.pictureUrl,
-      note: newPackage.note,
-      type: newPackage.type,
-    };
-    return res.status(201).json(response);
+  try {
+    const newPackage = await Package.create(packageInput);
+    return res.status(201).json(packageResponse(newPackage));
   } catch (error) {
+    console.error("Error creating package:", error);
     return res.status(500).json({
       status: "error",
       message: "An error occurred while creating the package",
@@ -69,45 +102,20 @@ async function createPackage(req, res) {
 }
 
 async function updatePackage(req, res) {
-  try {
-    const { id } = req.params;
-    const { title, description, price, duration, pictureUrl, note, type } =
-      req.body;
-    // Validate input
-    if (!title || !description || !price || !duration || !pictureUrl || !type) {
-      return res.status(400).json({
-        status: "error",
-        message: "Invalid package data provided",
-      });
-    }
+  const packageInput = normalizePackageInput(req.body);
+  if (!packageInput) return invalidPackageResponse(res);
 
-    const _package = await Package.findByPk(id);
-    if (!_package) {
+  try {
+    const packageRecord = await Package.findByPk(req.params.id);
+    if (!packageRecord || packageRecord.deletedAt) {
       return res.status(404).json({
         status: "error",
         message: "Package not found",
       });
     }
-    await _package.update({
-      title,
-      description,
-      price,
-      duration,
-      pictureUrl,
-      note,
-      type,
-    });
-    const response = {
-      id: _package.id,
-      title: _package.title,
-      description: _package.description,
-      price: _package.price,
-      duration: _package.duration,
-      pictureUrl: _package.pictureUrl,
-      note: _package.note,
-      type: _package.type,
-    };
-    return res.status(200).json(response);
+
+    await packageRecord.update(packageInput);
+    return res.status(200).json(packageResponse(packageRecord));
   } catch (error) {
     console.error("Error updating package:", error);
     return res.status(500).json({
@@ -119,23 +127,17 @@ async function updatePackage(req, res) {
 
 async function deletePackage(req, res) {
   try {
-    const { id } = req.params;
-
-    // Find the branch by ID
-    const _Package = await Package.findByPk(id);
-    if (!_Package) {
+    const packageRecord = await Package.findByPk(req.params.id);
+    if (!packageRecord || packageRecord.deletedAt) {
       return res.status(404).json({
         status: "error",
         message: "Package not found",
       });
     }
 
-    // await _Package.destroy();
-
-    await _Package.update({ deletedAt: new Date() });
-    await _Package.update({ isActive: false });
-
-    return res.status(204).json(); // No content to return
+    // Keep the row for booking history while removing it from active catalogs.
+    await packageRecord.update({ deletedAt: new Date(), isActive: false });
+    return res.status(204).json();
   } catch (error) {
     console.error("Error deleting package:", error);
     return res.status(500).json({
@@ -144,4 +146,5 @@ async function deletePackage(req, res) {
     });
   }
 }
+
 export { getAllPackage, createPackage, updatePackage, deletePackage };

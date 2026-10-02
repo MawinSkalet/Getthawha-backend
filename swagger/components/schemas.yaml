@@ -324,16 +324,24 @@ PackageInput:
     pictureUrl:
       type: string
       format: uri
+      nullable: true
       example: "https://example.com/package.jpg"
     note:
       type: string
+      nullable: true
       example: Optional note for the package
+    type:
+      type: string
+      enum:
+        - service
+        - promotion
+      example: service
   required:
     - title
     - description
     - price
     - duration
-    - pictureUrl
+    - type
 
 PackageOutput:
   type: object
@@ -357,13 +365,18 @@ PackageOutput:
     pictureUrl:
       type: string
       format: uri
+      nullable: true
       example: "https://example.com/package.jpg"
     note:
       type: string
+      nullable: true
       example: Optional note for the package
     type:
       type: string
-      example: thai
+      enum:
+        - service
+        - promotion
+      example: service
     isActive:
       type: boolean
       example: true
@@ -373,6 +386,7 @@ PackageOutput:
     - description
     - price
     - duration
+    - type
     - pictureUrl
 
 UserInfoResponse:
