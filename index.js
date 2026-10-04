@@ -1,7 +1,7 @@
+import "dotenv/config";
 import express from "express";
 import cookieParser from "cookie-parser";
 import cors from "cors";
-import dotenv from "dotenv";
 import multer from "multer";
 import { v4 as uuidv4 } from "uuid";
 import path from "path";
@@ -10,9 +10,11 @@ import { connect, sync } from "./config/database";
 import swaggerUi from "swagger-ui-express";
 import swaggerDocument from "./swagger.json";
 
-dotenv.config();
-
 const app = express();
+const configuredCorsOrigins = (process.env.CORS_ALLOWED_ORIGINS || "")
+  .split(",")
+  .map((origin) => origin.trim())
+  .filter(Boolean);
 
 //import routes
 import lineRouter from "./controllers/line.routes";
@@ -39,6 +41,7 @@ app.use(cookieParser());
 app.use(
   cors({
     origin: [
+      ...configuredCorsOrigins,
       ...(process.env.FRONTEND_ORIGIN ? [new URL(process.env.FRONTEND_ORIGIN).origin] : []),
       "http://localhost:3000",
       "http://localhost:3001",

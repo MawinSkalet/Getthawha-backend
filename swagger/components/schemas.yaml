@@ -22,6 +22,28 @@ BookingOutput:
         - cancelled
         - completed
       example: pending
+    customerEmail:
+      type: string
+      format: email
+      nullable: true
+      example: guest@example.com
+    customerName:
+      type: string
+      nullable: true
+      example: Guest Name
+    numberOfGuests:
+      type: integer
+      minimum: 1
+      maximum: 20
+      example: 1
+    source:
+      type: string
+      enum:
+        - website
+        - facebook
+        - line
+        - admin
+      example: website
     user:
       type: object
       properties:
@@ -104,10 +126,34 @@ BookingInput:
       type: string
       format: date-time
       example: "2023-10-01T12:00:00Z"
+    customerEmail:
+      type: string
+      format: email
+      example: guest@example.com
+    customerName:
+      type: string
+      maxLength: 120
+      example: Guest Name
+    numberOfGuests:
+      type: integer
+      minimum: 1
+      maximum: 20
+      default: 1
+      example: 1
+    source:
+      type: string
+      enum:
+        - website
+        - facebook
+        - line
+        - admin
+      default: website
+      example: website
   required:
     - branchId
     - packageId
     - date
+    - customerEmail
 
 BookingWithUserInput:
   type: object
@@ -278,16 +324,30 @@ PackageInput:
     pictureUrl:
       type: string
       format: uri
+      nullable: true
       example: "https://example.com/package.jpg"
     note:
       type: string
+      nullable: true
       example: Optional note for the package
+    type:
+      type: string
+      enum:
+        - service
+        - promotion
+      example: service
+    category:
+      type: string
+      example: Thai Massage
+    isActive:
+      type: boolean
+      example: true
   required:
     - title
     - description
     - price
     - duration
-    - pictureUrl
+    - type
 
 PackageOutput:
   type: object
@@ -311,13 +371,21 @@ PackageOutput:
     pictureUrl:
       type: string
       format: uri
+      nullable: true
       example: "https://example.com/package.jpg"
     note:
       type: string
+      nullable: true
       example: Optional note for the package
     type:
       type: string
-      example: thai
+      enum:
+        - service
+        - promotion
+      example: service
+    category:
+      type: string
+      example: Thai Massage
     isActive:
       type: boolean
       example: true
@@ -327,7 +395,62 @@ PackageOutput:
     - description
     - price
     - duration
+    - type
     - pictureUrl
+    - category
+    - isActive
+
+PackageGroupInput:
+  type: object
+  properties:
+    type:
+      type: string
+      enum:
+        - service
+        - promotion
+    category:
+      type: string
+      example: Thai Massage
+    title:
+      type: string
+      example: Thai Massage
+    description:
+      type: string
+      example: Traditional Thai massage
+    pictureUrl:
+      type: string
+      format: uri
+      nullable: true
+    note:
+      type: string
+      nullable: true
+    isActive:
+      type: boolean
+      default: true
+    variants:
+      type: array
+      minItems: 1
+      items:
+        type: object
+        properties:
+          duration:
+            type: integer
+            enum:
+              - 60
+              - 90
+              - 120
+          price:
+            type: number
+            exclusiveMinimum: 0
+        required:
+          - duration
+          - price
+  required:
+    - type
+    - category
+    - title
+    - description
+    - variants
 
 UserInfoResponse:
   type: object

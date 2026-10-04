@@ -4,7 +4,7 @@
     tags:
       - Admin Dashboard
     summary: Get dashboard overview statistics
-    description: Retrieve key metrics for the admin dashboard including total bookings, revenue, users, and today's bookings
+    description: Retrieve key metrics for the admin dashboard including total bookings, revenue from confirmed and completed bookings, users, and today's completed bookings
     responses:
       "200":
         description: Dashboard statistics retrieved successfully

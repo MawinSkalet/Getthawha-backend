@@ -27,7 +27,7 @@
   },
   "scripts": {
     "build:swagger": "node scripts/build-swagger.js",
-    "dev": "npm run build:swagger && nodemon --ext js,json --exec \"bun index.js\"",
+    "dev": "npm run build:swagger && nodemon --ext js,ts,json --exec \"bun index.js\"",
     "start": "npm run build:swagger && node index.js",
     "swagger:watch": "node scripts/watch-swagger.js"
   }

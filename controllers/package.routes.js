@@ -13,6 +13,18 @@ packageRouter.post("/", async (req, res) => {
   await services.createPackage(req, res);
 });
 
+packageRouter.post("/group", async (req, res) => {
+  await services.createPackageGroup(req, res);
+});
+
+packageRouter.put("/group/:id", async (req, res) => {
+  await services.updatePackageGroup(req, res);
+});
+
+packageRouter.delete("/group/:id", async (req, res) => {
+  await services.deletePackageGroup(req, res);
+});
+
 packageRouter.put("/:id", async (req, res) => {
   await services.updatePackage(req, res);
 });

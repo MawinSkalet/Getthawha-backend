@@ -85,7 +85,7 @@
               invalidInput:
                 value:
                   status: error
-                  message: Invalid booking data provided
+                  message: Branch, package, date, and customer email are required
       "401":
         description: Unauthorized - User authentication required
         content:

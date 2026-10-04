@@ -634,7 +634,7 @@
                   "invalidInput": {
                     "value": {
                       "status": "error",
-                      "message": "Invalid booking data provided"
+                      "message": "Branch, package, date, and customer email are required"
                     }
                   }
                 }
@@ -1768,6 +1768,139 @@
         }
       }
     },
+    "/admin/package/group": {
+      "post": {
+        "tags": [
+          "Admin Package"
+        ],
+        "summary": "Create a menu item with multiple duration and price variants",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PackageGroupInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Menu item created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PackageOutput"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid menu item data"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "409": {
+            "description": "A menu item with this name already exists"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/admin/package/group/{id}": {
+      "put": {
+        "tags": [
+          "Admin Package"
+        ],
+        "summary": "Update a menu item and synchronize its duration variants",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PackageGroupInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Menu item updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PackageOutput"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid menu item data"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Menu item not found"
+          },
+          "409": {
+            "description": "A package with this exact name already exists"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Admin Package"
+        ],
+        "summary": "Remove a menu item and all of its variants from the active catalog",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Menu item removed successfully"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Menu item not found"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
     "/admin/package/{id}": {
       "put": {
         "tags": [
@@ -1896,22 +2029,7 @@
         ],
         "responses": {
           "204": {
-            "description": "Package deleted successfully",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiResponse"
-                },
-                "examples": {
-                  "success": {
-                    "value": {
-                      "status": "success",
-                      "message": "Package deleted successfully"
-                    }
-                  }
-                }
-              }
-            }
+            "description": "Package deleted successfully"
           },
           "401": {
             "description": "Unauthorized",
@@ -2662,7 +2780,7 @@
           "Admin Dashboard"
         ],
         "summary": "Get dashboard overview statistics",
-        "description": "Retrieve key metrics for the admin dashboard including total bookings, revenue, users, and today's bookings",
+        "description": "Retrieve key metrics for the admin dashboard including total bookings, revenue from confirmed and completed bookings, users, and today's completed bookings",
         "responses": {
           "200": {
             "description": "Dashboard statistics retrieved successfully",
@@ -3005,6 +3123,76 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "/admin/calendar/appointments/{year}/{month}": {
+      "get": {
+        "tags": [
+          "Admin Calendar"
+        ],
+        "summary": "Get all appointments for a specific month",
+        "description": "Retrieve appointments ordered by date with customer, package, voucher, and branch details",
+        "parameters": [
+          {
+            "name": "year",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 2000,
+              "maximum": 2200,
+              "example": 2025
+            }
+          },
+          {
+            "name": "month",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 12,
+              "example": 8
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Appointments for the month retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "example": "success"
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/BookingOutput"
+                      }
+                    }
+                  },
+                  "required": [
+                    "status",
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid year or month"
+          },
+          "401": {
+            "description": "Unauthorized - Admin authentication required"
+          },
+          "500": {
+            "description": "Internal server error"
           }
         }
       }
@@ -4660,6 +4848,33 @@
             ],
             "example": "pending"
           },
+          "customerEmail": {
+            "type": "string",
+            "format": "email",
+            "nullable": true,
+            "example": "guest@example.com"
+          },
+          "customerName": {
+            "type": "string",
+            "nullable": true,
+            "example": "Guest Name"
+          },
+          "numberOfGuests": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 20,
+            "example": 1
+          },
+          "source": {
+            "type": "string",
+            "enum": [
+              "website",
+              "facebook",
+              "line",
+              "admin"
+            ],
+            "example": "website"
+          },
           "user": {
             "type": "object",
             "properties": {
@@ -4769,12 +4984,41 @@
             "type": "string",
             "format": "date-time",
             "example": "2023-10-01T12:00:00Z"
+          },
+          "customerEmail": {
+            "type": "string",
+            "format": "email",
+            "example": "guest@example.com"
+          },
+          "customerName": {
+            "type": "string",
+            "maxLength": 120,
+            "example": "Guest Name"
+          },
+          "numberOfGuests": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 20,
+            "default": 1,
+            "example": 1
+          },
+          "source": {
+            "type": "string",
+            "enum": [
+              "website",
+              "facebook",
+              "line",
+              "admin"
+            ],
+            "default": "website",
+            "example": "website"
           }
         },
         "required": [
           "branchId",
           "packageId",
-          "date"
+          "date",
+          "customerEmail"
         ]
       },
       "BookingWithUserInput": {
@@ -4990,11 +5234,29 @@
           "pictureUrl": {
             "type": "string",
             "format": "uri",
+            "nullable": true,
             "example": "https://example.com/package.jpg"
           },
           "note": {
             "type": "string",
+            "nullable": true,
             "example": "Optional note for the package"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "service",
+              "promotion"
+            ],
+            "example": "service"
+          },
+          "category": {
+            "type": "string",
+            "example": "Thai Massage"
+          },
+          "isActive": {
+            "type": "boolean",
+            "example": true
           }
         },
         "required": [
@@ -5002,7 +5264,7 @@
           "description",
           "price",
           "duration",
-          "pictureUrl"
+          "type"
         ]
       },
       "PackageOutput": {
@@ -5032,15 +5294,25 @@
           "pictureUrl": {
             "type": "string",
             "format": "uri",
+            "nullable": true,
             "example": "https://example.com/package.jpg"
           },
           "note": {
             "type": "string",
+            "nullable": true,
             "example": "Optional note for the package"
           },
           "type": {
             "type": "string",
-            "example": "thai"
+            "enum": [
+              "service",
+              "promotion"
+            ],
+            "example": "service"
+          },
+          "category": {
+            "type": "string",
+            "example": "Thai Massage"
           },
           "isActive": {
             "type": "boolean",
@@ -5053,7 +5325,79 @@
           "description",
           "price",
           "duration",
-          "pictureUrl"
+          "type",
+          "pictureUrl",
+          "category",
+          "isActive"
+        ]
+      },
+      "PackageGroupInput": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "service",
+              "promotion"
+            ]
+          },
+          "category": {
+            "type": "string",
+            "example": "Thai Massage"
+          },
+          "title": {
+            "type": "string",
+            "example": "Thai Massage"
+          },
+          "description": {
+            "type": "string",
+            "example": "Traditional Thai massage"
+          },
+          "pictureUrl": {
+            "type": "string",
+            "format": "uri",
+            "nullable": true
+          },
+          "note": {
+            "type": "string",
+            "nullable": true
+          },
+          "isActive": {
+            "type": "boolean",
+            "default": true
+          },
+          "variants": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "properties": {
+                "duration": {
+                  "type": "integer",
+                  "enum": [
+                    60,
+                    90,
+                    120
+                  ]
+                },
+                "price": {
+                  "type": "number",
+                  "exclusiveMinimum": 0
+                }
+              },
+              "required": [
+                "duration",
+                "price"
+              ]
+            }
+          }
+        },
+        "required": [
+          "type",
+          "category",
+          "title",
+          "description",
+          "variants"
         ]
       },
       "UserInfoResponse": {
