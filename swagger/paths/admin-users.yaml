@@ -92,6 +92,62 @@
                   message: An error occurred while searching users
 
 /admin/user/{id}:
+  patch:
+    tags:
+      - Admin Users
+    summary: Update a user's profile details
+    description: Save editable customer contact details in the user profile
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: The unique identifier of the user
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/UserProfileUpdateInput"
+    responses:
+      "200":
+        description: User profile updated successfully
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserOutput"
+      "400":
+        description: Invalid profile data
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApiResponse"
+      "401":
+        description: Unauthorized - Admin authentication required
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApiResponse"
+      "404":
+        description: User not found
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApiResponse"
+      "409":
+        description: Display name already in use
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApiResponse"
+      "500":
+        description: Internal server error
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApiResponse"
+
   get:
     tags:
       - Admin Users
@@ -110,7 +166,7 @@
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/UserOutput"
+              $ref: "#/components/schemas/AdminUserDetailOutput"
       "401":
         description: Unauthorized - Admin authentication required
         content:

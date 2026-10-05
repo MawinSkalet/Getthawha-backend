@@ -13,6 +13,10 @@ userRouter.get("/search", async (req, res) => {
   await services.searchUsers(req, res);
 });
 
+userRouter.patch("/:id", async (req, res) => {
+  await services.updateUserById(req, res);
+});
+
 userRouter.get("/:id", async (req, res) => {
   await services.getUserById(req, res);
 });

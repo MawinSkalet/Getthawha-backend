@@ -3903,6 +3903,96 @@
       }
     },
     "/admin/user/{id}": {
+      "patch": {
+        "tags": [
+          "Admin Users"
+        ],
+        "summary": "Update a user's profile details",
+        "description": "Save editable customer contact details in the user profile",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The unique identifier of the user"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserProfileUpdateInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "User profile updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserOutput"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid profile data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Admin authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "User not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Display name already in use",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            }
+          }
+        }
+      },
       "get": {
         "tags": [
           "Admin Users"
@@ -3926,7 +4016,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/UserOutput"
+                  "$ref": "#/components/schemas/AdminUserDetailOutput"
                 }
               }
             }
@@ -4965,6 +5055,121 @@
           "package"
         ]
       },
+      "AdminUserBookingOutput": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "4394f1e7-2392-4fbd-9799-5c3d1665a659"
+          },
+          "date": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "totalPrice": {
+            "type": "string",
+            "example": "300.00"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "confirmed",
+              "cancelled",
+              "completed"
+            ]
+          },
+          "customerEmail": {
+            "type": "string",
+            "format": "email",
+            "nullable": true
+          },
+          "customerName": {
+            "type": "string",
+            "nullable": true
+          },
+          "customerPhone": {
+            "type": "string",
+            "nullable": true
+          },
+          "user": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "displayName": {
+                "type": "string"
+              },
+              "pictureUrl": {
+                "type": "string",
+                "nullable": true
+              }
+            }
+          },
+          "branch": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "address": {
+                "type": "string",
+                "nullable": true
+              }
+            }
+          },
+          "package": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "title": {
+                "type": "string"
+              },
+              "duration": {
+                "type": "integer",
+                "description": "Duration in minutes"
+              }
+            }
+          },
+          "voucher": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "nullable": true,
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "code": {
+                "type": "string"
+              },
+              "discount": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "required": [
+          "id",
+          "date",
+          "totalPrice",
+          "status",
+          "user",
+          "branch",
+          "package"
+        ]
+      },
       "BookingInput": {
         "type": "object",
         "properties": {
@@ -5548,7 +5753,25 @@
           "pictureUrl": {
             "type": "string",
             "format": "uri",
+            "nullable": true,
             "example": "https://example.com/profile.jpg"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "nullable": true,
+            "example": "customer@example.com"
+          },
+          "phone": {
+            "type": "string",
+            "nullable": true,
+            "example": "+66 81 234 5678"
+          },
+          "address": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 500,
+            "example": "Chiang Mai, Thailand"
           },
           "createdAt": {
             "type": "string",
@@ -5564,9 +5787,58 @@
         "required": [
           "id",
           "displayName",
-          "pictureUrl",
           "createdAt",
           "updatedAt"
+        ]
+      },
+      "UserProfileUpdateInput": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "displayName": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 180,
+            "example": "Customer Name"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "maxLength": 254,
+            "nullable": true,
+            "example": "customer@example.com"
+          },
+          "phone": {
+            "type": "string",
+            "maxLength": 32,
+            "nullable": true,
+            "example": "+66 81 234 5678"
+          },
+          "address": {
+            "type": "string",
+            "maxLength": 500,
+            "nullable": true,
+            "example": "Chiang Mai, Thailand"
+          }
+        },
+        "minProperties": 1
+      },
+      "AdminUserDetailOutput": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/UserOutput"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "bookings": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/AdminUserBookingOutput"
+                }
+              }
+            }
+          }
         ]
       },
       "ReviewInput": {

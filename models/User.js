@@ -15,6 +15,19 @@ const User = sequelize.define("users", {
     type: DataTypes.STRING,
     allowNull: true,
   },
+  email: {
+    type: DataTypes.STRING,
+    allowNull: true,
+    validate: { isEmail: true },
+  },
+  phone: {
+    type: DataTypes.STRING,
+    allowNull: true,
+  },
+  address: {
+    type: DataTypes.STRING(500),
+    allowNull: true,
+  },
 });
 
 export default User;

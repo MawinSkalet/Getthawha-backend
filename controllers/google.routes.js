@@ -34,11 +34,17 @@ router.get("/authorization",async(req,res)=>{
     const claims=jwt.verify(token.data.id_token,createPublicKey({key:jwk,format:"jwk"}),{algorithms:["RS256"],audience:process.env.GOOGLE_CLIENT_ID,issuer:["https://accounts.google.com","accounts.google.com"]});
     if(claims.nonce!==session.nonce || typeof claims.exp!=="number" || (claims.azp && claims.azp!==process.env.GOOGLE_CLIENT_ID) || typeof claims.sub!=="string" || !claims.sub) throw new Error("Invalid identity");
     const id="google:"+claims.sub;
+    const verifiedEmail = claims.email_verified === true && typeof claims.email === "string"
+      ? claims.email
+      : null;
     let user=await User.findByPk(id);
     if(!user){
       let name=String(claims.name || "Google Guest").slice(0,180);
       if(await User.findOne({where:{displayName:name}})) name += " · " + claims.sub;
-      user=await User.create({id,displayName:name,pictureUrl:claims.picture || null});
+      user=await User.create({id,displayName:name,pictureUrl:claims.picture || null,email:verifiedEmail});
+    } else if (!user.email && verifiedEmail) {
+      user.email = verifiedEmail;
+      await user.save();
     }
     const info=jwt.sign({id:user.id},process.env.JWT_SECRET,{expiresIn:"1h"});
     return res.cookie("info",info,{...authCookieOptions(),maxAge:3600000}).redirect(frontendUrl(next));
