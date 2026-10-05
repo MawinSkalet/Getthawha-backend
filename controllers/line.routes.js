@@ -1,9 +1,10 @@
 import express from "express";
 import * as services from "../services/line.services";
 import {devLoginAllowed} from "../services/google.config";
+import authRateLimiter from "../middlewares/authRateLimiter";
 const lineRouter = express.Router();
 
-lineRouter.get("/authentication", async (req, res) => {
+lineRouter.get("/authentication", authRateLimiter, async (req, res) => {
   await services.authentication(req, res);
 });
 

@@ -1,9 +1,10 @@
 import express from "express";
 import * as services from "../services/staffAuth.services";
 import verifyAdminJwt from "../middlewares/verifyAdminJwt";
+import authRateLimiter from "../middlewares/authRateLimiter";
 const staffAuthRouter = express.Router();
 
-staffAuthRouter.post("/login", async (req, res) => {
+staffAuthRouter.post("/login", authRateLimiter, async (req, res) => {
   await services.login(req, res);
 });
 

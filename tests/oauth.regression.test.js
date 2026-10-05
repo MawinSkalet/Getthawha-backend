@@ -29,7 +29,8 @@ describe("OAuth regressions",()=>{
  it("checks the explicit env file instead of inherited valid credentials",()=>{
   const dir=mkdtempSync(join(tmpdir(),"oauth-regression-"));const file=join(dir,"missing.env");
   writeFileSync(file,"NODE_ENV=dev\nGOOGLE_CLIENT_ID=\nGOOGLE_CLIENT_SECRET=\n");
-  const result=spawnSync(process.execPath,["scripts/check-google-oauth.js",file],{encoding:"utf8",env:{...process.env,NODE_ENV:"dev",GOOGLE_CLIENT_ID:"test",GOOGLE_CLIENT_SECRET:"test",GOOGLE_REDIRECT_URI:"http://localhost:8000/google/authorization",FRONTEND_ORIGIN:"http://localhost:3000",COOKIE_DOMAIN:"",JWT_SECRET:"test"}});
+  const script=join(import.meta.dir,"../scripts/check-google-oauth.js");
+  const result=spawnSync(process.execPath,[script,file],{encoding:"utf8",env:{...process.env,NODE_ENV:"dev",GOOGLE_CLIENT_ID:"test",GOOGLE_CLIENT_SECRET:"test",GOOGLE_REDIRECT_URI:"http://localhost:8000/google/authorization",FRONTEND_ORIGIN:"http://localhost:3000",COOKIE_DOMAIN:"",JWT_SECRET:"test"}});
   expect(result.status).toBe(1);expect(result.stderr).toContain("GOOGLE_CLIENT_ID is missing");
  });
  it("returns LINE cancellation to the login page and preserves the booking",async()=>{

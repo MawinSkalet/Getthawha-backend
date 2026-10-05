@@ -5,9 +5,10 @@ import {randomBytes,createHash,createPublicKey} from "crypto";
 import {User} from "../models/index";
 import {safeReturnPath,frontendUrl,authCookieOptions,oauthCookieOptions,loginFailure} from "../services/oauth.helpers";
 import {googleConfigErrors} from "../services/google.config";
+import authRateLimiter from "../middlewares/authRateLimiter";
 const router=express.Router();
 const configured=()=>googleConfigErrors().length === 0;
-router.get("/authentication",(req,res)=>{
+router.get("/authentication",authRateLimiter,(req,res)=>{
   const next=safeReturnPath(req.query.next);
   if(!configured()) return loginFailure(res,"not_configured",next);
   const state=randomBytes(32).toString("hex"),nonce=randomBytes(32).toString("hex"),verifier=randomBytes(32).toString("base64url");
