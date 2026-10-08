@@ -1,6 +1,7 @@
 import express from "express";
 import * as services from "../services/adminDashboard.services";
 import verifyAdminJwt from "../middlewares/verifyAdminJwt";
+import { getBranchReport, getDashboardPerformance } from "../services/adminBranchReport.services";
 const adminDasboardRouter = express.Router();
 
 adminDasboardRouter.use(verifyAdminJwt);
@@ -16,6 +17,9 @@ adminDasboardRouter.get("/trending", async (req, res) => {
 adminDasboardRouter.get("/branch-performance", async (req, res) => {
   await services.getBrachPerformance(req, res);
 });
+
+adminDasboardRouter.get("/branches/:branchId", getBranchReport);
+adminDasboardRouter.get("/performance", getDashboardPerformance);
 
 adminDasboardRouter.get("/recent-activity/:day/:month/:year", async (req, res) => {
   await services.getRecentActivity(req, res);

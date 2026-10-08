@@ -221,9 +221,10 @@ async function getAllTrending(req, res) {
 async function getBrachPerformance(req, res) {
   //get all booking in branch
   try {
-    const branchPerformance = await Booking.findAll({
+    const branchPerformance = await Branch.findAll({
+      where: { deletedAt: null },
       attributes: [
-        "branchId",
+        "id", "name",
         [
           Booking.sequelize.fn("COUNT", Booking.sequelize.col("bookings.id")),
           "totalBookings",
@@ -231,12 +232,13 @@ async function getBrachPerformance(req, res) {
       ],
       include: [
         {
-          model: Branch,
-          as: "branch",
-          attributes: ["id", "name"],
+          model: Booking,
+          as: "bookings",
+          attributes: [],
+          required: false,
         },
       ],
-      group: ["branchId", "branch.id", "branch.name"],
+      group: ["branches.id", "branches.name"],
       order: [
         [
           Booking.sequelize.fn("COUNT", Booking.sequelize.col("bookings.id")),
@@ -246,9 +248,9 @@ async function getBrachPerformance(req, res) {
     });
 
     const response = branchPerformance.map((performance) => ({
-      branchId: performance.branchId,
-      branchName: performance.branch.name,
-      totalBookings: performance.dataValues.totalBookings,
+      branchId: performance.id,
+      branchName: performance.name,
+      totalBookings: Number(performance.dataValues.totalBookings),
     }));
 
     return res.status(200).json(response);
