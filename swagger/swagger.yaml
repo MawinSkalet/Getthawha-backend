@@ -33,6 +33,8 @@ paths:
     $ref: "./paths/user-review.yaml#/~1review"
   /review/me:
     $ref: "./paths/user-review.yaml#/~1review~1me"
+  /review/{id}:
+    $ref: "./paths/user-review.yaml#/~1review~1{id}"
   /review/testimonials:
     $ref: "./paths/testimonials.yaml#/~1review~1testimonials"
 

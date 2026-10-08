@@ -110,7 +110,7 @@
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/ReviewOutput"
+              $ref: "#/components/schemas/ReviewMutationResponse"
       "400":
         description: Bad request, invalid input
         content:
@@ -181,3 +181,55 @@
                 value:
                   status: error
                   message: An error occurred while submitting the review
+
+/review/{id}:
+  put:
+    tags:
+      - Review
+    summary: Update one of your reviews
+    description: Updates the authenticated user's review. An edited review returns to pending approval.
+    parameters:
+      - name: id
+        in: path
+        required: true
+        description: Review identifier
+        schema:
+          type: string
+          format: uuid
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ReviewUpdateInput"
+    responses:
+      "200":
+        description: Review updated and sent for approval
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReviewMutationResponse"
+      "400":
+        description: Invalid rating or comment
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApiResponse"
+      "401":
+        description: Unauthorized - User authentication required
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApiResponse"
+      "404":
+        description: Review not found or not owned by the authenticated user
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApiResponse"
+      "500":
+        description: Internal server error
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApiResponse"

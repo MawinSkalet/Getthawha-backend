@@ -2774,6 +2774,296 @@
         }
       }
     },
+    "/admin/dashboard/performance": {
+      "get": {
+        "tags": [
+          "Admin Dashboard"
+        ],
+        "summary": "Get performance across all branches for a Day, Week, Month or Year",
+        "description": "Requires an authenticated admin cookie. Uses appointment dates in Asia/Bangkok with a half-open interval [start, end). Includes every branch and historical appointment. Revenue includes confirmed and completed bookings only. Returns the same statistics and chart buckets as the branch report, aggregated across all branches. Day uses hourly buckets, Week starts Monday, Month uses weeks clipped to the month, and Year uses months. Empty buckets have zero totals.",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "view",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "day",
+                "week",
+                "month",
+                "year"
+              ],
+              "default": "month"
+            }
+          },
+          {
+            "in": "query",
+            "name": "date",
+            "description": "Anchor date in YYYY-MM-DD, years 2000–2200. Defaults to today in Bangkok.",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Period, statistics (bookings, revenue, customers, pending), statusCounts and chart buckets with exact bookings/revenue and drilldown dates."
+          },
+          "400": {
+            "description": "Invalid view or date"
+          },
+          "401": {
+            "description": "Admin authentication required"
+          },
+          "403": {
+            "description": "Invalid or expired admin token"
+          },
+          "500": {
+            "description": "Report query failed"
+          }
+        }
+      }
+    },
+    "/admin/dashboard/branches/{branchId}": {
+      "get": {
+        "tags": [
+          "Admin Dashboard"
+        ],
+        "summary": "Get a branch report for a Day, Week, Month or Year",
+        "description": "Requires an authenticated admin cookie. Uses appointment dates in Asia/Bangkok and a half-open interval [start, end). Revenue includes confirmed and completed bookings only. Customers are distinct user accounts with bookings in this scope. Status and search filter the paginated appointment list; summary, chart, service rankings and status counts describe the entire selected branch and period. Week starts Monday; Month chart weeks are clipped to the month.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "branchId",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "in": "query",
+            "name": "view",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "day",
+                "week",
+                "month",
+                "year"
+              ],
+              "default": "month"
+            }
+          },
+          {
+            "in": "query",
+            "name": "date",
+            "description": "Anchor date in YYYY-MM-DD, years 2000–2200. Defaults to today in Bangkok.",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "all",
+                "pending",
+                "confirmed",
+                "completed",
+                "cancelled"
+              ],
+              "default": "all"
+            }
+          },
+          {
+            "in": "query",
+            "name": "search",
+            "description": "Literal case-insensitive customer name, phone or service search.",
+            "schema": {
+              "type": "string",
+              "maxLength": 150
+            }
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9999999,
+              "default": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Branch, branch selector, period, statistics, statusCounts, chart buckets, top 5 services and paginated appointments (10 per page).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "required": [
+                        "branch",
+                        "branches",
+                        "period",
+                        "statistics",
+                        "statusCounts",
+                        "chart",
+                        "services",
+                        "appointments"
+                      ],
+                      "properties": {
+                        "branch": {
+                          "type": "object"
+                        },
+                        "branches": {
+                          "type": "array",
+                          "items": {
+                            "type": "object"
+                          }
+                        },
+                        "period": {
+                          "type": "object",
+                          "properties": {
+                            "view": {
+                              "type": "string"
+                            },
+                            "date": {
+                              "type": "string",
+                              "format": "date"
+                            },
+                            "start": {
+                              "type": "string",
+                              "format": "date"
+                            },
+                            "end": {
+                              "type": "string",
+                              "format": "date"
+                            },
+                            "timezone": {
+                              "type": "string",
+                              "example": "Asia/Bangkok"
+                            }
+                          }
+                        },
+                        "statistics": {
+                          "type": "object",
+                          "properties": {
+                            "bookings": {
+                              "type": "integer"
+                            },
+                            "revenue": {
+                              "type": "number"
+                            },
+                            "customers": {
+                              "type": "integer"
+                            },
+                            "pending": {
+                              "type": "integer"
+                            }
+                          }
+                        },
+                        "statusCounts": {
+                          "type": "object",
+                          "additionalProperties": {
+                            "type": "integer"
+                          }
+                        },
+                        "chart": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "label": {
+                                "type": "string"
+                              },
+                              "fullLabel": {
+                                "type": "string"
+                              },
+                              "bookings": {
+                                "type": "integer"
+                              },
+                              "revenue": {
+                                "type": "number"
+                              },
+                              "nextView": {
+                                "type": "string",
+                                "enum": [
+                                  "day",
+                                  "week",
+                                  "month"
+                                ]
+                              },
+                              "nextDate": {
+                                "type": "string",
+                                "format": "date"
+                              }
+                            }
+                          }
+                        },
+                        "services": {
+                          "type": "array",
+                          "items": {
+                            "type": "object"
+                          }
+                        },
+                        "appointments": {
+                          "type": "object",
+                          "properties": {
+                            "rows": {
+                              "type": "array",
+                              "items": {
+                                "type": "object"
+                              }
+                            },
+                            "total": {
+                              "type": "integer"
+                            },
+                            "page": {
+                              "type": "integer"
+                            },
+                            "pageSize": {
+                              "type": "integer",
+                              "example": 10
+                            },
+                            "pages": {
+                              "type": "integer"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid branch ID or report filters"
+          },
+          "401": {
+            "description": "Admin authentication required"
+          },
+          "403": {
+            "description": "Invalid or expired admin token"
+          },
+          "404": {
+            "description": "Branch not found"
+          },
+          "500": {
+            "description": "Report query failed"
+          }
+        }
+      }
+    },
     "/admin/dashboard": {
       "get": {
         "tags": [
@@ -4546,7 +4836,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ReviewOutput"
+                  "$ref": "#/components/schemas/ReviewMutationResponse"
                 }
               }
             }
@@ -4661,6 +4951,89 @@
                       "message": "An error occurred while submitting the review"
                     }
                   }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/review/{id}": {
+      "put": {
+        "tags": [
+          "Review"
+        ],
+        "summary": "Update one of your reviews",
+        "description": "Updates the authenticated user's review. An edited review returns to pending approval.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Review identifier",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReviewUpdateInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Review updated and sent for approval",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReviewMutationResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid rating or comment",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - User authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Review not found or not owned by the authenticated user",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
                 }
               }
             }
@@ -5866,6 +6239,26 @@
           "rating"
         ]
       },
+      "ReviewUpdateInput": {
+        "type": "object",
+        "properties": {
+          "rating": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 5,
+            "example": 5
+          },
+          "comment": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 1000,
+            "example": "The massage was excellent."
+          }
+        },
+        "required": [
+          "rating"
+        ]
+      },
       "ReviewApprovalInput": {
         "type": "object",
         "properties": {
@@ -5930,6 +6323,26 @@
           "isApproved",
           "createdAt",
           "updatedAt"
+        ]
+      },
+      "ReviewMutationResponse": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "example": "success"
+          },
+          "message": {
+            "type": "string",
+            "example": "Review submitted successfully"
+          },
+          "review": {
+            "$ref": "#/components/schemas/ReviewOutput"
+          }
+        },
+        "required": [
+          "status",
+          "review"
         ]
       },
       "ReviewWithUserOutput": {
