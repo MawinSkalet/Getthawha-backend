@@ -2,6 +2,7 @@ import express from "express";
 import verifyUserJwt from "../middlewares/verifyUserJwt";
 import {
   createReview,
+  updateUserReview,
   getBranchReviews,
   getUserReviews,
   getTestimonials,
@@ -23,6 +24,10 @@ userReviewRouter.get("/branch/:branchId", async (req, res) => {
 
 userReviewRouter.post("/", verifyUserJwt, async (req, res) => {
   await createReview(req, res);
+});
+
+userReviewRouter.put("/:id", verifyUserJwt, async (req, res) => {
+  await updateUserReview(req, res);
 });
 
 export default userReviewRouter;

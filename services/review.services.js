@@ -89,6 +89,69 @@ async function createReview(req, res) {
   }
 }
 
+async function updateUserReview(req, res) {
+  try {
+    const userId = req.user?.id;
+    const { id } = req.params;
+    const { rating, comment } = req.body;
+
+    if (!userId) {
+      return res.status(401).json({
+        status: "error",
+        message: "User not authorized to perform this action",
+      });
+    }
+
+    const parsedRating = Number(rating);
+    if (!Number.isInteger(parsedRating) || parsedRating < 1 || parsedRating > 5) {
+      return res.status(400).json({
+        status: "error",
+        message: "Rating must be an integer between 1 and 5",
+      });
+    }
+
+    if (comment !== undefined && comment !== null && typeof comment !== "string") {
+      return res.status(400).json({ status: "error", message: "Review comment must be text" });
+    }
+    const normalizedComment = typeof comment === "string" ? comment.trim() : null;
+    if (normalizedComment && normalizedComment.length > 1000) {
+      return res.status(400).json({ status: "error", message: "Review comment cannot exceed 1000 characters" });
+    }
+
+    const review = await Review.findOne({ where: { id, userId } });
+    if (!review) {
+      return res.status(404).json({ status: "error", message: "Review not found" });
+    }
+
+    await review.update({
+      rating: parsedRating,
+      comment: normalizedComment || null,
+      isApproved: false,
+    });
+
+    return res.status(200).json({
+      status: "success",
+      message: "Review updated and sent for approval",
+      review: {
+        id: review.id,
+        userId: review.userId,
+        branchId: review.branchId,
+        rating: review.rating,
+        comment: review.comment,
+        isApproved: review.isApproved,
+        createdAt: review.createdAt,
+        updatedAt: review.updatedAt,
+      },
+    });
+  } catch (error) {
+    console.error("Error updating user review:", error);
+    return res.status(500).json({
+      status: "error",
+      message: "An error occurred while updating your review",
+    });
+  }
+}
+
 async function getUserReviews(req, res) {
   try {
     const userId = req.user?.id;
@@ -300,6 +363,7 @@ async function deleteReview(req, res) {
 
 export {
   createReview,
+  updateUserReview,
   getUserReviews,
   getBranchReviews,
   getTestimonials,
